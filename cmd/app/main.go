@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/joho/godotenv"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -39,78 +40,71 @@ func RegPage(c echo.Context) error{
 	})
 }
 func ConnectingSQL() (*pgx.Conn, error) {
-	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", 
-		os.Getenv("PGX_USERNAME"),
-		os.Getenv("PGX_PASSWORD"),
-		os.Getenv("PGX_HOST"),
-		os.Getenv("PGX_PORT"),
-		os.Getenv("PGX_DB"),
-	)
-	conn, err := pgx.Connect(context.Background(), connString)
+	conn, err := pgx.Connect(context.Background(), os.Getenv("PGX_URL"))
 	if err != nil{
-		log.Printf("Не могу подключиться к базе данных: %v", err)
-	}
-	defer conn.Close(context.Background())
-
-	_, err = conn.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS users(
+		log.Printf("Не могу подключиться к базе данных: %v\n", err)
+	} 
+	_, err = conn.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS users (
 		ID SERIAL PRIMARY KEY,
-		user_id INTEGER,
+		user_id VARCHAR(100),
 		user_login VARCHAR(50),
 		user_password VARCHAR(50),
-		user_email VARCHAR(100)),
-		created_at TIMESTAMP DEFAULT NOW()`)
+		user_email VARCHAR(100),
+		created_at TIMESTAMP DEFAULT NOW())`)
 	if err != nil{
 		log.Printf("Can't create table: %v\n", err)
 	}
 	return conn, err
 }
 
-func WriteDataSQL(login, password, email string) {
+func WriteDataSQL(id, login, password, email string) error{
 	conn, err := ConnectingSQL()
 	if err != nil {
 		log.Printf("Database connection error: %v\n", err)
 	}
-	type User struct{
-		ID int
-		Login string
-		Password string
-		Email string
-	}
-	var user User
-	err = conn.QueryRow(context.Background(), 
-		`INSERT INTO users(user_id, user_login, user_password, user_email) 
-		VALUES($1, $2, $3, $4)`).Scan(&user.ID, &user.Login, &user.Password, &user.Email)
+	defer conn.Close(context.Background())
+
+	_, err = conn.Exec(context.Background(), 
+		`INSERT INTO users (user_id, user_login, user_password, user_email) 
+		VALUES ($1, $2, $3, $4)`, id, login, password, email)
 	if err != nil{
 		log.Printf("Can't insert data in table: %v\n", err)
 	}
+	return err
 }		
+func Registration(c echo.Context) error {
+	getRegLogin := c.FormValue("reg_login")
+	getRegPassword := c.FormValue("reg_password")
+	getRegEmail := c.FormValue("reg_email")
+	newUUID := uuid.New()
+	err := WriteDataSQL(newUUID.String(), getRegLogin, getRegPassword, getRegEmail)
+	if err != nil {
+		log.Printf("Can't put userdata: %v\n", err)
+	}
+	return c.Redirect(http.StatusOK, "/public/reg")
+}
+
 func Authorization(c echo.Context) error{
 	conn, err := ConnectingSQL()
 	if err != nil{
-		log.Printf("Database connection error: %v", err)
+		log.Printf("Database connection error: %v\n", err)
 	}
+	defer conn.Close(context.Background())
+
 	getAuthLogin := c.FormValue("auth_login")
 	getAuthPassword := c.FormValue("auth_password")
-	
-	// getDBLogin := conn.QueryRow(context.Background(), "SELECT user_login FROM users")
-	// getDBPassword := conn.QueryRow(context.Background(), "") 
-
-	rows := conn.QueryRow(context.Background(), "SELECT user_login, user_password FROM users")
 	type User struct{
-		ID int
 		Login string
 		Password string
-		Email string
 	}
 	var user User
-	err = conn.QueryRow(context.Background(), 
-		`SELECT users(user_id, user_login, user_password, user_email) 
-		VALUES($1, $2, $3, $4)`).Scan(&user.ID, &user.Login, &user.Password, &user.Email)
-	if err != nil{
-		log.Printf("Can't insert data in table: %v\n", err)
+	if err = conn.QueryRow(context.Background(), "SELECT login, password FROM users").Scan(&user.Login, &user.Password); err != nil{
+		log.Printf("Не могу просканировать данные из базы данных в странице авторизации: %v\n", err)
 	}
-	
-	return c.Redirect(http.StatusOK, "/reg")
+	if user.Password == getAuthPassword || user.Login == getAuthLogin{
+		return c.Redirect(http.StatusOK, "/users/home")
+	}
+	return c.Redirect(http.StatusOK, "/public/reg")
 }
 
 func Handlers(){
@@ -118,33 +112,40 @@ func Handlers(){
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 	
 	e.GET("/", func(c echo.Context) error{
 		return c.Render(http.StatusOK, "auth.html", nil)
 	})
 	public := e.Group("/public")
 	public.GET("/auth", AuthPage)
+	public.POST("/auth/post", Authorization)
 	public.GET("/reg", RegPage)
+	public.POST("/reg/post", Registration)
 
 	users := e.Group("/users")
 	users.GET("/main", MainPage)
-	
+
 	tmpl, err := template.ParseFiles(
 		"web/templates/index.html", 
 		"web/templates/auth.html",
+		"web/templates/reg.html",
 		"web/templates/header.html",
 		"web/templates/footer.html",
-)
+	)
 	if err != nil{
-		log.Printf("Ошибка парсинга HTML-шаблона: %v", err)
+		log.Printf("Ошибка парсинга HTML-шаблона: %v\n", err)
 	}
 
 	e.Renderer = &Template{templates: tmpl}
 	e.Static("/web/css/", "web/css/styles.css")
 
-	e.Logger.Fatal(e.Start(":8000"))
+	e.Logger.Fatal(e.Start(":8079"))
 }
 
 func main(){
+	if err := godotenv.Load(); err != nil{
+		log.Fatalf("Can't load env file: %v\n", err)
+	}
 	Handlers()
 }

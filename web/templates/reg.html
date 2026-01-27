@@ -1,9 +1,10 @@
-<!doctype html>
-<html lang='en'>
+{{  define "reg.html"  }}
 
+
+<html lang='en'>
     <head>
         <meta charset='utf-8'>
-        <title>Notebook Registration</title>
+        <title>Notebook {{ .Title }}</title>
     </head>
 
     <body>
@@ -12,18 +13,24 @@
         </header>
         <main>
             <h2>Регистрация</h2>
-            <form action="index.html" method="post">
+            <form action="/public/reg/post" method="post">
                 <label for="login">Login</label>
-                <input type="text" id="reg_login" name="reg_user_login">
+                <input type="text" id="reg_login" name="reg_login">
 
                 <label for="password">Password</label>
-                <input type="password" id="reg_password" name="reg_user_password">
+                <input type="password" id="reg_password" name="reg_password">
 
                 <label for="email">Email</label>
-                <input type="email" id="reg_email" name="reg_user_email">
-            </form>    
+                <input type="email" id="reg_email" name="reg_email">
+            </form>  
 
+            <form action="/public/reg/post" method="post">
+                <button>Enter</button>
+            </form>  
         </main>
     </body>
 
 </html>
+
+
+{{ end }}
