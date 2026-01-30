@@ -1,7 +1,10 @@
 {{  define "auth.html"  }}
+{{ template "header.html" }}
 
 <!doctype html>
 <html lang='en'>
+<link rel="stylesheet" href="/web/css/styles.css">
+
 <head>
     <meta charset='utf-8'>
     <title>Notebook {{ .Title }}</title>
@@ -10,17 +13,20 @@
 <body>
     <main>
         <h2>Авторизация</h2>
+        <div class="auth_error">
+            {{ .Error}}
+        </div>
         <form action="/public/auth/post" method="post">
-            <label for="login">Login</label>
+            <label for="auth_login">Login</label>
             <input type="text" id="auth_login" name="auth_login">
 
-            <label for="password">Password</label>
+            <label for="auth_password">Password</label>
             <input type="password" id="auth_password" name="auth_password">
-        </form>    
-
-        <form action="/public/auth/post" method="post">
             <button>Enter</button>
         </form>    
+         <form action="/public/reg" method="get">
+            <button>Registration</button>
+        </form>   
     </main>
 </body>
 

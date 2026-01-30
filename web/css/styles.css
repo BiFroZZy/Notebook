@@ -1,32 +1,4 @@
-{{ define "footer.html" }}
-    <link rel='stylesheet' href="/web/css/styles.css">
-    <footer class="footer-gradient">
-        <div class="footer-container">
-            <div class="footer-section">
-                <h3 class="footer-title">
-                    <span class="notebook-emoji">📝</span> Notebook App
-                </h3>
-                <p class="footer-description">
-                    Простое и удобное приложение для ваших мыслей, идей и заметок.
-                </p>
-            </div>
-            <div class="footer-section">
-                <h4 class="section-title">Информация</h4>
-                <ul class="footer-menu">
-                    <li><a href="/about">О проекте</a></li>
-                    <li><a href="/help">Помощь</a></li>
-                </ul>
-            </div>
-        </div>
-        
-        <div class="footer-bottom">
-            <div class="copyright">
-                © 2026 Notebook App • Сделано с ❤️ для ваших идей
-            </div>
-        </div>
-    </footer>
-<style>
-    .footer-gradient {
+.footer-gradient {
     background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%);
     color: white;
     padding: 40px 20px 20px;
@@ -92,5 +64,3 @@
     opacity: 0.8;
     font-size: 0.9rem;
 }
-</style>
-{{ end }}

@@ -57,7 +57,7 @@ func ConnectingSQL() (*pgx.Conn, error) {
 	return conn, err
 }
 
-func WriteDataSQL(id, login, password, email string) error{
+func WriteDataSQL(id, login, password, email string){
 	conn, err := ConnectingSQL()
 	if err != nil {
 		log.Printf("Database connection error: %v\n", err)
@@ -70,19 +70,16 @@ func WriteDataSQL(id, login, password, email string) error{
 	if err != nil{
 		log.Printf("Can't insert data in table: %v\n", err)
 	}
-	return err
 }		
 func Registration(c echo.Context) error {
 	getRegLogin := c.FormValue("reg_login")
 	getRegPassword := c.FormValue("reg_password")
 	getRegEmail := c.FormValue("reg_email")
 	newUUID := uuid.New()
-	err := WriteDataSQL(newUUID.String(), getRegLogin, getRegPassword, getRegEmail)
-	if err != nil {
-		log.Printf("Can't put userdata: %v\n", err)
-	}
-	return c.Redirect(http.StatusOK, "/public/reg")
-}
+	WriteDataSQL(newUUID.String(), getRegLogin, getRegPassword, getRegEmail)
+	
+	return c.Redirect(http.StatusOK, "/users/main")
+}	
 
 func Authorization(c echo.Context) error{
 	conn, err := ConnectingSQL()
@@ -93,18 +90,18 @@ func Authorization(c echo.Context) error{
 
 	getAuthLogin := c.FormValue("auth_login")
 	getAuthPassword := c.FormValue("auth_password")
-	type User struct{
-		Login string
-		Password string
-	}
-	var user User
-	if err = conn.QueryRow(context.Background(), "SELECT login, password FROM users").Scan(&user.Login, &user.Password); err != nil{
+	var login, password string
+	if err = conn.QueryRow(context.Background(), "SELECT user_login, user_password FROM users").Scan(&login, &password); err != nil{
 		log.Printf("Не могу просканировать данные из базы данных в странице авторизации: %v\n", err)
 	}
-	if user.Password == getAuthPassword || user.Login == getAuthLogin{
-		return c.Redirect(http.StatusOK, "/users/home")
+	if password == getAuthPassword || login == getAuthLogin{
+		return c.Redirect(http.StatusOK, "/users/main")
+	}else{
+		return c.Render(http.StatusOK, "auth.html", map[string]interface{}{
+			"Title": "Authorization",
+			"Error": "Wrong login or password, try again",
+		})
 	}
-	return c.Redirect(http.StatusOK, "/public/reg")
 }
 
 func Handlers(){
@@ -113,16 +110,15 @@ func Handlers(){
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
-	
-	e.GET("/", func(c echo.Context) error{
+	public := e.Group("/public")
+	public.GET("/", func(c echo.Context) error{
 		return c.Render(http.StatusOK, "auth.html", nil)
 	})
-	public := e.Group("/public")
 	public.GET("/auth", AuthPage)
 	public.POST("/auth/post", Authorization)
 	public.GET("/reg", RegPage)
 	public.POST("/reg/post", Registration)
-
+// TODO: сделать users/user{uuid}, где uuid получается из базы данных
 	users := e.Group("/users")
 	users.GET("/main", MainPage)
 
@@ -140,7 +136,7 @@ func Handlers(){
 	e.Renderer = &Template{templates: tmpl}
 	e.Static("/web/css/", "web/css/styles.css")
 
-	e.Logger.Fatal(e.Start(":8079"))
+	e.Logger.Fatal(e.Start(":8080"))
 }
 
 func main(){

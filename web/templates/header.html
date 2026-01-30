@@ -1,0 +1,67 @@
+{{ define "header.html" }}
+<!doctype html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Notebook!</title>
+    <link rel='stylesheet' href='/web/css/styles.css'>
+    
+    <style>
+        .header-minimal {
+            background: linear-gradient(-0deg, #6d28d9 0%, #b257eb 100%);
+            min-height: 140px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+        .header-minimal::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #ffffff, transparent);
+        }
+        .notebook-title-minimal {
+            color: #fafafa;
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            position: relative;
+            padding: 0 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .notebook-title-minimal::before {
+            content: '📓';
+            position: absolute;
+            left: -40px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2.5rem;
+        }
+
+        .notebook-title-minimal::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 3px;
+            background: linear-gradient(to right, transparent, #fffafa, transparent);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header-minimal">
+        <h1 class="notebook-title-minimal">Notebook!</h1>
+    </header>
+
+{{ end }}
