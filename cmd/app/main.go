@@ -76,9 +76,30 @@ func Registration(c echo.Context) error {
 	getRegPassword := c.FormValue("reg_password")
 	getRegEmail := c.FormValue("reg_email")
 	newUUID := uuid.New()
-	WriteDataSQL(newUUID.String(), getRegLogin, getRegPassword, getRegEmail)
 	
-	return c.Redirect(http.StatusOK, "/users/main")
+	conn, err := ConnectingSQL()
+	if err != nil {
+		return err
+	}
+	var login, password, email string
+	err = conn.QueryRow(context.Background(), "SELECT user_login, user_password, user_email FROM users WHERE user_login = $1 OR user_password = $2", getRegLogin, getRegPassword).Scan(&login, &password, &email)
+	if err != nil{
+		return err
+	}
+	if getRegLogin == login && getRegPassword == password{
+		return c.Render(http.StatusOK, "reg.html", map[string]interface{}{
+			"Title": "Registration",
+			"Error": "Login or password already exist",
+		})
+	}
+	if getRegEmail == email{
+		return c.Render(http.StatusOK, "reg.html", map[string]interface{}{
+			"Title": "Registration",
+			"Error": "You already have an account!",
+		})
+	}	
+	WriteDataSQL(newUUID.String(), getRegLogin, getRegPassword, getRegEmail)
+	return c.Redirect(http.StatusFound, "/users/main")
 }	
 
 func Authorization(c echo.Context) error{
@@ -95,6 +116,12 @@ func Authorization(c echo.Context) error{
 	err = conn.QueryRow(context.Background(), "SELECT user_login, user_password FROM users WHERE user_login = $1", getAuthLogin).Scan(&login, &password)
 	if err != nil{
 		log.Printf("%v", err)
+	}
+	if err == pgx.ErrNoRows{
+		return c.Render(http.StatusOK, "auth.html", map[string]interface{}{
+			"Title": "Authorization",
+			"Error": "No such user!",
+		})
 	}
 	if password == getAuthPassword && login == getAuthLogin{
 		c.Redirect(http.StatusFound, "/users/main")
@@ -113,6 +140,7 @@ func Handlers(){
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
+
 	public := e.Group("/public")
 	public.GET("/", func(c echo.Context) error{
 		return c.Render(http.StatusOK, "auth.html", nil)
@@ -139,7 +167,7 @@ func Handlers(){
 	e.Renderer = &Template{templates: tmpl}
 	e.Static("/web/css/", "web/css/styles.css")
 
-	e.Logger.Fatal(e.Start(":8078"))
+	e.Logger.Fatal(e.Start(":8080"))
 }
 
 func main(){

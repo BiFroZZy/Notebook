@@ -9,6 +9,9 @@
     <body>
         <main>
             <h2>Регистрация</h2>
+            <div class="reg_error">
+                {{ .Error }}
+            </div>
             <form action="/public/reg/post" method="post">
                 <label for="reg_login">Login</label>
                 <input type="text" id="reg_login" name="reg_login">
@@ -20,6 +23,9 @@
                 <input type="email" id="reg_email" name="reg_email">
                 <button>Enter</button>
             </form>  
+            <form action="/public/auth">
+                <button>Already have an account?</button>
+            </form>
         </main>
     </body>
 
