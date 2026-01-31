@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
@@ -90,18 +90,21 @@ func Authorization(c echo.Context) error{
 
 	getAuthLogin := c.FormValue("auth_login")
 	getAuthPassword := c.FormValue("auth_password")
+
 	var login, password string
-	if err = conn.QueryRow(context.Background(), "SELECT user_login, user_password FROM users").Scan(&login, &password); err != nil{
-		log.Printf("Не могу просканировать данные из базы данных в странице авторизации: %v\n", err)
+	err = conn.QueryRow(context.Background(), "SELECT user_login, user_password FROM users WHERE user_login = $1", getAuthLogin).Scan(&login, &password)
+	if err != nil{
+		log.Printf("%v", err)
 	}
-	if password == getAuthPassword || login == getAuthLogin{
-		return c.Redirect(http.StatusOK, "/users/main")
-	}else{
-		return c.Render(http.StatusOK, "auth.html", map[string]interface{}{
+	if password == getAuthPassword && login == getAuthLogin{
+		c.Redirect(http.StatusFound, "/users/main")
+	} else {
+		c.Render(http.StatusOK, "auth.html", map[string]interface{}{
 			"Title": "Authorization",
-			"Error": "Wrong login or password, try again",
+			"Error": "Wrong login or password",
 		})
 	}
+	return c.Redirect(http.StatusOK, "/public/reg")
 }
 
 func Handlers(){
@@ -136,7 +139,7 @@ func Handlers(){
 	e.Renderer = &Template{templates: tmpl}
 	e.Static("/web/css/", "web/css/styles.css")
 
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Logger.Fatal(e.Start(":8078"))
 }
 
 func main(){
