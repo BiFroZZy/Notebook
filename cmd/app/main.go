@@ -19,6 +19,8 @@ type Template struct{
 	templates *template.Template
 }
 
+var ctx = context.Background()
+
 // Метод для рендера шаблонов, обращается к структур Template
 func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error{
 	return t.templates.ExecuteTemplate(w, name, data) 
@@ -132,6 +134,15 @@ func Authorization(c echo.Context) error{
 		})
 	}
 	return c.Redirect(http.StatusOK, "/public/reg")
+}
+
+func GetUserID(){
+	conn, err := ConnectingSQL()
+	if err != nil{
+		log.Printf("Ошибка в получении ID: %v", err)
+	}
+	var userID string
+	err := conn.QueryRow()
 }
 
 func Handlers(){

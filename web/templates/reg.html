@@ -9,9 +9,11 @@
     <body>
         <main>
             <h2>Регистрация</h2>
+        {{ if .Error}}
             <div class="reg_error">
                 {{ .Error }}
             </div>
+        {{ end }}
             <form action="/public/reg/post" method="post">
                 <label for="reg_login">Login</label>
                 <input type="text" id="reg_login" name="reg_login">
@@ -31,5 +33,110 @@
 
 </html>
 
+<style>
+    body {
+        background-color: #f3e9ff !important;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    
+    main {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 4px 15px rgba(138, 43, 226, 0.15);
+        position: absolute;
+        top: 65%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    
+    h2 {
+        text-align: center;
+        color: #7b5bd6;
+        margin-bottom: 30px;
+        font-size: 24px;
+        margin-top: 0;
+    }
+    
+    .reg_error {
+        background: #ffeaea;
+        color: #d32f2f;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        text-align: center;
+        border-left: 4px solid #ff5252;
+    }
+    
+    form {
+        margin-bottom: 15px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-weight: 500;
+        font-size: 14px;
+    }
+    
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        box-sizing: border-box;
+        margin-bottom: 15px;
+        background: #faf9ff;
+        transition: border 0.3s;
+    }
+    
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="email"]:focus {
+        outline: none;
+        border-color: #7b5bd6;
+        background: white;
+    }
+    
+    button {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    form:first-of-type button {
+        background: #7b5bd6;
+        color: white;
+    }
+    
+    form:first-of-type button:hover {
+        background: #6a4bc4;
+    }
+    
+    form:last-of-type button {
+        background: white;
+        color: #7b5bd6;
+        border: 1px solid #7b5bd6;
+    }
+    
+    form:last-of-type button:hover {
+        background: #f8f5ff;
+    }
+</style>
 
 {{ end }}
