@@ -1,0 +1,79 @@
+{{ define "about.html" }}
+{{ template "header.html"}}
+
+<link rel="stylesheet" href="/web/css/styles.css">
+
+<head>
+    <meta charset='utf-8'>
+    <title>Notebook {{ .Title }}</title>
+</head>
+
+<!doctype html>
+    <div class="about_main">
+        <div class="about_nav">
+            <nav class="navigation">
+                <a href="/users/main">Домашняя страница</a>
+                <a href="/public/auth">Авторизация</a>
+            </nav>
+        </nav>
+        </div>
+        <div class="about-text">
+            <p>Даннный проект представляет собой простой блокнот с авторизацией и регистрацией для пользователя</p>
+        </div>
+    </div>
+</html>
+
+<style>
+    body {
+        background-color: #f3e9ff !important;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .about_main {
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        width: 90%;
+        max-width: 800px;
+        margin: 40px auto;
+        box-shadow: 0 4px 15px rgba(138, 43, 226, 0.15);
+    }
+    .about-text {
+        text-align: center;
+        color: #666;
+        font-size: 18px;
+        padding: 20px;
+        line-height: 1.6;
+    }
+    .about-text p {
+        color: #555;
+        font-size: 18px;
+        margin: 0;
+    }
+    .about_nav{
+        background: white;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(138, 43, 226, 0.1);
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+    }
+    nav a {
+        color: #7b5bd6;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 16px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        transition: all 0.3s;
+    }
+    nav a:hover {
+        background: #f8f5ff;
+    }
+</style>
+
+{{ template "footer.html" }}
+{{ end }}

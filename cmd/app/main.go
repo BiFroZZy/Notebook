@@ -13,6 +13,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+
+	h "notebook/web/handlers"
 )
 
 type Template struct{
@@ -26,27 +28,12 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 	return t.templates.ExecuteTemplate(w, name, data) 
 }
 
-func MainPage(c echo.Context) error{
-	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
-		"Title": "Main",
-	})
-}
-func AuthPage(c echo.Context) error{
-	return c.Render(http.StatusOK, "auth.html", map[string]interface{}{
-		"Title": "Authorization",
-	})
-}
-func RegPage(c echo.Context) error{
-	return c.Render(http.StatusOK, "reg.html", map[string]interface{}{
-		"Title": "Registration",
-	})
-}
 func ConnectingSQL() (*pgx.Conn, error) {
-	conn, err := pgx.Connect(context.Background(), os.Getenv("PGX_URL"))
+	conn, err := pgx.Connect(ctx, os.Getenv("PGX_URL"))
 	if err != nil{
 		log.Printf("Не могу подключиться к базе данных: %v\n", err)
 	} 
-	_, err = conn.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS users (
+	_, err = conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS users (
 		ID SERIAL PRIMARY KEY,
 		user_id VARCHAR(100),
 		user_login VARCHAR(50),
@@ -64,9 +51,9 @@ func WriteDataSQL(id, login, password, email string){
 	if err != nil {
 		log.Printf("Database connection error: %v\n", err)
 	}
-	defer conn.Close(context.Background())
+	defer conn.Close(ctx)
 
-	_, err = conn.Exec(context.Background(), 
+	_, err = conn.Exec(ctx, 
 		`INSERT INTO users (user_id, user_login, user_password, user_email) 
 		VALUES ($1, $2, $3, $4)`, id, login, password, email)
 	if err != nil{
@@ -84,7 +71,7 @@ func Registration(c echo.Context) error {
 		return err
 	}
 	var login, password, email string
-	err = conn.QueryRow(context.Background(), "SELECT user_login, user_password, user_email FROM users WHERE user_login = $1 OR user_password = $2", getRegLogin, getRegPassword).Scan(&login, &password, &email)
+	err = conn.QueryRow(ctx, "SELECT user_login, user_password, user_email FROM users WHERE user_login = $1 OR user_password = $2", getRegLogin, getRegPassword).Scan(&login, &password, &email)
 	if err != nil{
 		return err
 	}
@@ -109,13 +96,13 @@ func Authorization(c echo.Context) error{
 	if err != nil{
 		log.Printf("Database connection error: %v\n", err)
 	}
-	defer conn.Close(context.Background())
+	defer conn.Close(ctx)
 
 	getAuthLogin := c.FormValue("auth_login")
 	getAuthPassword := c.FormValue("auth_password")
 
 	var login, password string
-	err = conn.QueryRow(context.Background(), "SELECT user_login, user_password FROM users WHERE user_login = $1", getAuthLogin).Scan(&login, &password)
+	err = conn.QueryRow(ctx, "SELECT user_login, user_password FROM users WHERE user_login = $1", getAuthLogin).Scan(&login, &password)
 	if err != nil{
 		log.Printf("%v", err)
 	}
@@ -136,13 +123,37 @@ func Authorization(c echo.Context) error{
 	return c.Redirect(http.StatusOK, "/public/reg")
 }
 
-func GetUserID(){
+func GetUserID() string{
 	conn, err := ConnectingSQL()
 	if err != nil{
 		log.Printf("Ошибка в получении ID: %v", err)
 	}
 	var userID string
-	err := conn.QueryRow()
+	err = conn.QueryRow(ctx, "SELECT user_id FROM users").Scan(&userID)
+	if err != nil{
+		log.Printf("%v", err)
+	}
+	return userID
+}
+
+func WriteNotes(c echo.Context) error{
+	notes := c.FormValue("write_notes")
+
+	conn, err := ConnectingSQL()
+	if err != nil{
+		log.Printf("%v", err)
+	}
+	defer conn.Close(ctx)
+
+	_, err = conn.Exec(ctx, "INSERT INTO users_notes(notes) VALUES ($1)", notes)
+	if err != nil{
+		log.Printf("Can't insert user's notes in DB: %v", err)
+	}
+
+	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
+		"Title": "Main",
+		"Notes": notes,
+	})
 }
 
 func Handlers(){
@@ -151,18 +162,23 @@ func Handlers(){
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
+	e.Use(middleware.Secure())
 
 	public := e.Group("/public")
 	public.GET("/", func(c echo.Context) error{
 		return c.Render(http.StatusOK, "auth.html", nil)
 	})
-	public.GET("/auth", AuthPage)
 	public.POST("/auth/post", Authorization)
-	public.GET("/reg", RegPage)
+	public.GET("/auth", h.AuthPage)
+	public.GET("/reg", h.RegPage)
 	public.POST("/reg/post", Registration)
+	
 // TODO: сделать users/user{uuid}, где uuid получается из базы данных
 	users := e.Group("/users")
-	users.GET("/main", MainPage)
+	// users.GET("/user/:userID/main", MainPage)
+	users.GET("/about", h.AboutPage)
+	users.GET("/main", h.MainPage)
+	users.POST("/main/post", WriteNotes)
 
 	tmpl, err := template.ParseFiles(
 		"web/templates/index.html", 
@@ -170,6 +186,7 @@ func Handlers(){
 		"web/templates/reg.html",
 		"web/templates/header.html",
 		"web/templates/footer.html",
+		"web/templates/about.html",
 	)
 	if err != nil{
 		log.Printf("Ошибка парсинга HTML-шаблона: %v\n", err)
@@ -178,7 +195,7 @@ func Handlers(){
 	e.Renderer = &Template{templates: tmpl}
 	e.Static("/web/css/", "web/css/styles.css")
 
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Logger.Fatal(e.Start(":8070"))
 }
 
 func main(){
