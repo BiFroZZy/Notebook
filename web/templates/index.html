@@ -22,15 +22,19 @@
         </nav>
         <main>
             <h2>Последние заметки</h2>
-                <div class="notes">
+                <div class="main_notes">
                     <form action="/users/main/post" method="post">
                         <label for="write_notes">Введите текст для заметок: </label>
                         <input type="text" id="write_notes" name="write_notes">
                         <button>Enter</button>
                     </form>
-                    <ul>
-                        <li>{{ .Notes }}</li>
+                    {{ if .Notes }}
+                    <ul class="user_notes">
+                            <li>{{ .Notes }}</li>
                     </ul>
+                    {{ else }}
+                        <p>Пока нет заметок</p>
+                    {{ end }}
                 </div>
         </main>
     </body>
@@ -42,6 +46,10 @@
         padding: 0;
         min-height: 100vh;
         font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    .user_notes{
+        text-align: center;
+        font-size: larger;
     }
     .navigation{
         background: white;
@@ -84,7 +92,7 @@
         margin-top: 0;
     }
     
-    .notes {
+    .main_notes {
         text-align: center;
         color: #666;
         font-size: 18px;

@@ -59,7 +59,8 @@ func WriteDataSQL(id, login, password, email string){
 	if err != nil{
 		log.Printf("Can't insert data in table: %v\n", err)
 	}
-}		
+}	
+
 func Registration(c echo.Context) error {
 	getRegLogin := c.FormValue("reg_login")
 	getRegPassword := c.FormValue("reg_password")
@@ -138,7 +139,6 @@ func GetUserID() string{
 
 func WriteNotes(c echo.Context) error{
 	notes := c.FormValue("write_notes")
-
 	conn, err := ConnectingSQL()
 	if err != nil{
 		log.Printf("%v", err)
@@ -149,11 +149,10 @@ func WriteNotes(c echo.Context) error{
 	if err != nil{
 		log.Printf("Can't insert user's notes in DB: %v", err)
 	}
-
-	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
-		"Title": "Main",
-		"Notes": notes,
-	})
+	// data := map[string]interface{}{"Title": "Main", "Notes": notes}
+	data := struct{Title string; Notes string}{Title: "Main", Notes: notes}
+	// ages := struct{age int}{age: 42} Пример как записывать чтоб не заыбть как придурыч 
+	return c.Render(http.StatusOK, "index.html", data)
 }
 
 func Handlers(){
