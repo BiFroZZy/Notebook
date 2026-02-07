@@ -12,8 +12,6 @@ import (
 	db "notebook/internal/database"
 	h "notebook/web/handlers"
 )
-
-
 type Template struct{
 	templates *template.Template
 }
@@ -31,7 +29,7 @@ func Handlers(){
 	e.Use(middleware.Secure())
 
 	public := e.Group("/public")
-	public.GET("/", func(c echo.Context) error{
+	e.GET("/", func(c echo.Context) error{
 		return c.Render(http.StatusOK, "auth.html", nil)
 	})
 	public.POST("/auth/post", db.Authorization)
