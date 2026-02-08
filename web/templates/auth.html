@@ -14,19 +14,19 @@
     <main>
         <h2>Авторизация</h2>
         {{ if .Error}}
-        <div class="auth_error">
-            {{ .Error }}
-        </div>
+            <div class="auth_error">
+                {{ .Error }}
+            </div>
         {{ end }}
         <form action="/public/auth/post" method="post">
             <label for="auth_login">Login</label>
-            <input type="text" id="auth_login" name="auth_login">
+            <input type="text" id="auth_login" name="auth_login" required>
 
             <label for="auth_password">Password</label>
-            <input type="password" id="auth_password" name="auth_password">
+            <input type="password" id="auth_password" name="auth_password" required>
             <button>Enter</button>
         </form>    
-         <form action="/public/reg" method="get">
+        <form action="/public/reg" method="get">
             <button>Registration</button>
         </form>   
     </main>
@@ -40,7 +40,6 @@
         min-height: 100vh;
         font-family: 'Segoe UI', system-ui, sans-serif;
     }
-    
     main {
         background: white;
         border-radius: 12px;
@@ -53,7 +52,6 @@
         left: 50%;
         transform: translate(-50%, -50%);
     }
-    
     h2 {
         text-align: center;
         color: #7b5bd6;
@@ -61,7 +59,6 @@
         font-size: 24px;
         margin-top: 0;
     }
-    
     .auth_error {
         background: #ffeaea;
         color: #d32f2f;
@@ -72,11 +69,9 @@
         text-align: center;
         border-left: 4px solid #ff5252;
     }
-    
     form {
         margin-bottom: 15px;
     }
-    
     label {
         display: block;
         margin-bottom: 8px;
@@ -84,7 +79,6 @@
         font-weight: 500;
         font-size: 14px;
     }
-    
     input[type="text"],
     input[type="password"] {
         width: 100%;
@@ -97,14 +91,12 @@
         background: #faf9ff;
         transition: border 0.3s;
     }
-    
     input[type="text"]:focus,
     input[type="password"]:focus {
         outline: none;
         border-color: #7b5bd6;
         background: white;
     }
-    
     button {
         width: 100%;
         padding: 12px;
@@ -115,22 +107,18 @@
         border: none;
         transition: all 0.3s;
     }
-    
     form:first-of-type button {
         background: #7b5bd6;
         color: white;
     }
-    
     form:first-of-type button:hover {
         background: #6a4bc4;
     }
-    
     form:last-of-type button {
         background: white;
         color: #7b5bd6;
         border: 1px solid #7b5bd6;
     }
-    
     form:last-of-type button:hover {
         background: #f8f5ff;
     }

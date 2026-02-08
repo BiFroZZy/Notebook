@@ -1,13 +1,14 @@
 package handlers
 
 import (
-	"github.com/labstack/echo"
 	"net/http"
+	"github.com/labstack/echo"
+	// db "notebook/internal/database"
 )
-
 func MainPage(c echo.Context) error{
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
 		"Title": "Main",
+		"Notes": "",
 	})
 }
 func AuthPage(c echo.Context) error{

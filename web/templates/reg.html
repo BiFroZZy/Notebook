@@ -16,13 +16,13 @@
         {{ end }}
             <form action="/public/reg/post" method="post">
                 <label for="reg_login">Login</label>
-                <input type="text" id="reg_login" name="reg_login">
+                <input type="text" id="reg_login" name="reg_login" required>
 
                 <label for="reg_password">Password</label>
-                <input type="password" id="reg_password" name="reg_password">
+                <input type="password" id="reg_password" name="reg_password" required>
 
                 <label for="reg_email">Email</label>
-                <input type="email" id="reg_email" name="reg_email">
+                <input type="email" id="reg_email" name="reg_email" required>
                 <button>Enter</button>
             </form>  
             <form action="/public/auth">

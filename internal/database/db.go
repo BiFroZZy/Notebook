@@ -122,6 +122,10 @@ func GetUserID() string{
 	return userID
 }
 
+func ShowNotes(){
+	
+}
+
 func WriteNotes(c echo.Context) error{
 	notes := c.FormValue("write_notes")
 	conn, err := ConnectingSQL()
@@ -129,13 +133,7 @@ func WriteNotes(c echo.Context) error{
 		log.Printf("%v", err)
 	}
 	defer conn.Close(ctx)
-	// if notes == ""{
-	// 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
-	// 		"Title":"Main",
-	// 		"Error":"It is empty!",
-	// 	})
-	// }
-	
+
 	_, err = conn.Exec(ctx, "INSERT INTO users_notes(notes) VALUES ($1)", notes)
 	if err != nil{
 		log.Printf("Can't insert user's notes in DB: %v", err)
@@ -158,15 +156,15 @@ func WriteNotes(c echo.Context) error{
 		}
 		usersData = append(usersData, u)
 	}
-	
-	// TODO: надо вытащить данные записей пользователя из базы в виде слайса и целиком, не через queryrow еблан
-	data := map[string]interface{}{"Title": "Main", "Notes": usersData}
-	// при range len .Nodes в файле index.html выводит то что там в слайсе 0 элемент, над чекнуть
-	// по какой то причине в слайсе вообще нихуя нет, выводит [] ДАЖЕ В ТЕРМИНАЛЕ! 
-
-	// data := struct{Title string; Notes []string}{Title: "Main", Notes: usersData}
-	// log.Println(usersData)
-
-	// ages := struct{age int}{age: 42} Пример как записывать чтоб не заыбть как придурыч 
-	return c.Render(http.StatusOK, "index.html", data)
+	if notes == ""{
+		return c.Render(http.StatusOK, "index.html", map[string]interface{}{
+			"Title": "Main",
+			"Notes": usersData,
+			"Error": "Empty field!",
+		})
+	}
+	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
+		"Title": "Main", 
+		"Notes": usersData,
+	})
 }

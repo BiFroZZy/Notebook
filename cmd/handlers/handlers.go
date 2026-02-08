@@ -41,7 +41,8 @@ func Handlers(){
 	users := e.Group("/users")
 	// users.GET("/user/:userID/main", MainPage)
 	users.GET("/about", h.AboutPage)
-	users.GET("/main", h.MainPage)
+	// users.GET("/main", h.MainPage)
+	users.GET("/main", db.WriteNotes)
 	users.POST("/main/post", db.WriteNotes)
 
 	tmpl, err := template.ParseFiles(

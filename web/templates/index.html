@@ -22,24 +22,23 @@
         </nav>
         <main>
             <h2>Последние заметки</h2>
-            <!-- {{ if .Error }}
+            {{ if .Error }}
                 <div class="main_error">
                     {{.Error}}
                 </div>
-            {{ end }} -->
+            {{ end }}
                 <div class="main_notes">
                     <form action="/users/main/post" method="post">
                         <label for="write_notes">Введите текст для заметок: </label>
-                        <input type="text" id="write_notes" name="write_notes">
+                        <input type="text" id="write_notes" name="write_notes" required>
                         <button>Enter</button>
                     </form>
                     {{ if .Notes }}
-                    <ul class="user_notes">
-                            <!-- <li>{{ .Notes  }}</li> -->
-                            {{ range .Notes }}
-                                <li>{{ . }}</li>
-                            {{ end }}
-                    </ul>
+                        <ul class="user_notes">
+                                {{ range .Notes }}
+                                    <li>{{ .NotesData }}</li>
+                                {{ end }}
+                        </ul>
                     {{ else }}
                         <p>Пока нет заметок</p>
                     {{ end }}
@@ -66,6 +65,16 @@
         display: flex;
         justify-content: center;
         gap: 30px;
+    }
+    .main_error {
+        background: #ffeaea;
+        color: #d32f2f;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        text-align: center;
+        border-left: 4px solid #ff5252;
     }
     nav a {
         color: #7b5bd6;
