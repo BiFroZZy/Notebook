@@ -14,6 +14,12 @@ import (
 
 var ctx = context.Background()
 
+type User struct
+{
+	NotesData string
+	CreatedAt time.Time
+}
+
 func ConnectingSQL() (*pgx.Conn, error) {
 	conn, err := pgx.Connect(ctx, os.Getenv("PGX_URL"))
 	if err != nil{
@@ -74,7 +80,7 @@ func Registration(c echo.Context) error {
 		})
 	}	
 	WriteDataSQL(newUUID.String(), getRegLogin, getRegPassword, getRegEmail)
-	return c.Redirect(http.StatusFound, "/users/main")
+	return c.Redirect(http.StatusFound, "/users/notes")
 }	
 
 func Authorization(c echo.Context) error{
@@ -122,49 +128,66 @@ func GetUserID() string{
 	return userID
 }
 
-func ShowNotes(){
-	
+func ShowNotes(c echo.Context) error{
+	info := WriteNotes(c)
+	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
+		"Title": "Notes", 
+		"Notes": info,
+	})
 }
-
-func WriteNotes(c echo.Context) error{
-	notes := c.FormValue("write_notes")
+// Создать в базе данных ID для заметок - для /users/main/:id - чтобы удалить заметку с этой же id
+func DeleteNotes(c echo.Context) error {
 	conn, err := ConnectingSQL()
 	if err != nil{
 		log.Printf("%v", err)
 	}
-	defer conn.Close(ctx)
-
-	_, err = conn.Exec(ctx, "INSERT INTO users_notes(notes) VALUES ($1)", notes)
+	_, err = conn.Exec(ctx, "DELETE FROM users_notes")
 	if err != nil{
-		log.Printf("Can't insert user's notes in DB: %v", err)
+		log.Printf("Can't delete the note: %v", err)
 	}
-	type User struct{
-		NotesData string
-		CreatedAt time.Time
-	}
-	usersData := []User{}
-	rows, err := conn.Query(ctx, "SELECT notes, created_at FROM users_notes")
-	if err != nil{
-		log.Printf("Error in querying with rows: %v", err)
-	}
-	defer rows.Close()
+	return c.Render(http.StatusOK, "index.html", ShowNotes)
+}
 
-	for rows.Next(){
-		u := User{}
-		if err := rows.Scan(&u.NotesData, &u.CreatedAt); err!= nil{
-			log.Printf("Error in scaning data with rows: %v", err)
+func WriteNotes(c echo.Context) []User {
+	notes := c.FormValue("write_notes")
+	if notes != ""{
+		conn, err := ConnectingSQL()
+		if err != nil{
+			log.Printf("%v", err)
 		}
-		usersData = append(usersData, u)
+		defer conn.Close(ctx)
+
+		_, err = conn.Exec(ctx, "INSERT INTO users_notes(notes) VALUES ($1)", notes)
+		if err != nil{
+			log.Printf("Can't insert user's notes in DB: %v", err)
+		}
+		
+		usersData := []User{}
+		rows, err := conn.Query(ctx, "SELECT notes, created_at FROM users_notes")
+		if err != nil{
+			log.Printf("Error in querying with rows: %v", err)
+		}
+		defer rows.Close()
+
+		for rows.Next(){
+			u := User{}
+			if err := rows.Scan(&u.NotesData, &u.CreatedAt); err!= nil{
+				log.Printf("Error in scaning data with rows: %v", err)
+			}
+			usersData = append(usersData, u)
+		}
+		// if notes == ""{
+		// 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
+		// 		"Title": "Main",
+		// 		"Notes": usersData,
+		// 		"Error": "Empty field!",
+		// 	})
+		// }
+		// return c.Render(http.StatusOK, "index.html", map[string]interface{}{
+		// 	"Title": "Main", 
+		// 	"Notes": usersData,
+		// })
+		return usersData
 	}
-	if notes == ""{
-		return c.Render(http.StatusOK, "index.html", map[string]interface{}{
-			"Title": "Main",
-			"Notes": usersData,
-			"Error": "Empty field!",
-		})
-	}
-	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
-		"Title": "Main", 
-		"Notes": usersData,
-	})
+	return nil
 }

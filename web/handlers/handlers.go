@@ -5,12 +5,11 @@ import (
 	"github.com/labstack/echo"
 	// db "notebook/internal/database"
 )
-func MainPage(c echo.Context) error{
-	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
-		"Title": "Main",
-		"Notes": "",
-	})
-}
+// func MainPage(c echo.Context) error{
+// 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
+// 		"Title": "Main",
+// 	})
+// }
 func AuthPage(c echo.Context) error{
 	return c.Render(http.StatusOK, "auth.html", map[string]interface{}{
 		"Title": "Authorization",

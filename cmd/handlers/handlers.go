@@ -15,7 +15,6 @@ import (
 type Template struct{
 	templates *template.Template
 }
-
 // Метод для рендера шаблонов, обращается к структур Template
 func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error{
 	return t.templates.ExecuteTemplate(w, name, data) 
@@ -39,26 +38,18 @@ func Handlers(){
 	
 // TODO: сделать users/user{uuid}, где uuid получается из базы данных
 	users := e.Group("/users")
+	users.DELETE("/notes/delete", db.DeleteNotes)
 	// users.GET("/user/:userID/main", MainPage)
 	users.GET("/about", h.AboutPage)
-	// users.GET("/main", h.MainPage)
-	users.GET("/main", db.WriteNotes)
-	users.POST("/main/post", db.WriteNotes)
-
-	tmpl, err := template.ParseFiles(
-		"web/templates/index.html", 
-		"web/templates/auth.html",
-		"web/templates/reg.html",
-		"web/templates/header.html",
-		"web/templates/footer.html",
-		"web/templates/about.html",
+	users.GET("/notes", db.ShowNotes)
+	users.POST("/notes/post", db.ShowNotes)
+	tmpl, err := template.ParseGlob(
+		"web/templates/*.html", 
 	)
 	if err != nil{
 		log.Printf("Ошибка парсинга HTML-шаблона: %v\n", err)
 	}
-
 	e.Renderer = &Template{templates: tmpl}
 	e.Static("/web/css/", "web/css/styles.css")
-
 	e.Logger.Fatal(e.Start(":8070"))
 }

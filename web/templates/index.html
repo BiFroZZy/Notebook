@@ -17,7 +17,7 @@
     <body>
         <nav class="navigation">
             <a href="/public/auth">Авторизация</a>
-            <a href="/users/main">Домашняя страница</a>
+            <a href="/users/notes">Домашняя страница</a>
             <a href="/users/about">Информация</a>
         </nav>
         <main>
@@ -28,16 +28,20 @@
                 </div>
             {{ end }}
                 <div class="main_notes">
-                    <form action="/users/main/post" method="post">
+                    <form action="/users/notes/post" method="post">
                         <label for="write_notes">Введите текст для заметок: </label>
                         <input type="text" id="write_notes" name="write_notes" required>
                         <button>Enter</button>
                     </form>
                     {{ if .Notes }}
                         <ul class="user_notes">
-                                {{ range .Notes }}
-                                    <li>{{ .NotesData }}</li>
-                                {{ end }}
+                            {{ range .Notes }}
+                                <li>
+                                    <form action="/users/notes/delete">
+                                        {{ .NotesData }}<button class="del_button">Удалить</button>
+                                    </form>
+                                </li>
+                            {{ end }}
                         </ul>
                     {{ else }}
                         <p>Пока нет заметок</p>
@@ -53,6 +57,19 @@
         padding: 0;
         min-height: 100vh;
         font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    .del_button{
+        background-color: rgb(234, 54, 54);
+        color: rgb(255, 255, 255);
+        font-size: large;
+        border-radius: 10px;
+        border-width: 4px;
+        border-color: rgb(254, 0, 0);
+        opacity: 0.8;
+        margin-left: 100px;
+    }
+    .del_button:hover{
+        opacity: 1;
     }
     .user_notes{
         text-align: center;
