@@ -1,0 +1,83 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Записки для пользователей",
+        "title": "Notebook documentaion (Документация по программе)",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost",
+    "paths": {
+        "/public/auth": {
+            "get": {
+                "description": "Страница авторизации",
+                "produces": [
+                    "text/html"
+                ],
+                "summary": "Authorization",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/public/auth/post": {
+            "post": {
+                "description": "Отправка данных пользователя в базу данных на странице авторизации",
+                "summary": "Authorization posting data",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/public/reg": {
+            "get": {
+                "description": "Страница регистрации",
+                "produces": [
+                    "text/html"
+                ],
+                "summary": "Registration",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/public/reg/post": {
+            "post": {
+                "description": "Отправка данных пользователя в базу данных на странице регистрации",
+                "summary": "Registration posting data",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/users/about": {
+            "get": {
+                "description": "Основная информация о проекте",
+                "produces": [
+                    "text/html"
+                ],
+                "summary": "About",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/users/notes": {
+            "get": {
+                "description": "Заметки пользователя",
+                "summary": "User's notes here",
+                "responses": {}
+            }
+        }
+    }
+}

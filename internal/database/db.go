@@ -9,17 +9,15 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 var ctx = context.Background()
 
-type User struct
-{
+type User struct{
 	NotesData string
 	CreatedAt time.Time
 }
-
 func ConnectingSQL() (*pgx.Conn, error) {
 	conn, err := pgx.Connect(ctx, os.Getenv("PGX_URL"))
 	if err != nil{
@@ -51,7 +49,10 @@ func WriteDataSQL(id, login, password, email string){
 		log.Printf("Can't insert data in table: %v\n", err)
 	}
 }	
-
+// @Summary Registration posting data 
+// @Description Отправка данных пользователя в базу данных на странице регистрации
+// @Router /public/reg/post [post]
+// @Success 200
 func Registration(c echo.Context) error {
 	getRegLogin := c.FormValue("reg_login")
 	getRegPassword := c.FormValue("reg_password")
@@ -82,7 +83,10 @@ func Registration(c echo.Context) error {
 	WriteDataSQL(newUUID.String(), getRegLogin, getRegPassword, getRegEmail)
 	return c.Redirect(http.StatusFound, "/users/notes")
 }	
-
+// @Summary Authorization posting data
+// @Description Отправка данных пользователя в базу данных на странице авторизации
+// @Router /public/auth/post [post]
+// @Success 200
 func Authorization(c echo.Context) error{
 	conn, err := ConnectingSQL()
 	if err != nil{
@@ -105,7 +109,7 @@ func Authorization(c echo.Context) error{
 		})
 	}
 	if password == getAuthPassword && login == getAuthLogin{
-		c.Redirect(http.StatusFound, "/users/main")
+		c.Redirect(http.StatusFound, "/users/notes")
 	} else {
 		c.Render(http.StatusOK, "auth.html", map[string]interface{}{
 			"Title": "Authorization",
@@ -128,6 +132,21 @@ func GetUserID() string{
 	return userID
 }
 
+func GetNoteID() string{
+	conn, err := ConnectingSQL()
+	if err != nil{
+		log.Printf("Ошибка в получении ID: %v", err)
+	}
+	var noteID string
+	if err := conn.QueryRow(ctx, "SELECT user_id FROM users").Scan(&noteID);err != nil{
+		log.Printf("%v", err)
+	}
+	return noteID
+}
+
+// @Summary User's notes here
+// @Description Заметки пользователя
+// @Router /users/notes [get]
 func ShowNotes(c echo.Context) error{
 	info := WriteNotes(c)
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
@@ -141,7 +160,8 @@ func DeleteNotes(c echo.Context) error {
 	if err != nil{
 		log.Printf("%v", err)
 	}
-	_, err = conn.Exec(ctx, "DELETE FROM users_notes")
+	noteID := c.Param("id")
+	_, err = conn.Exec(ctx, "DELETE FROM users_notes WHERE id = $1", noteID)
 	if err != nil{
 		log.Printf("Can't delete the note: %v", err)
 	}

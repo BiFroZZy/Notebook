@@ -1,0 +1,54 @@
+host: localhost
+info:
+  contact: {}
+  description: Записки для пользователей
+  title: Notebook documentaion (Документация по программе)
+  version: "1.0"
+paths:
+  /public/auth:
+    get:
+      description: Страница авторизации
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+      summary: Authorization
+  /public/auth/post:
+    post:
+      description: Отправка данных пользователя в базу данных на странице авторизации
+      responses:
+        "200":
+          description: OK
+      summary: Authorization posting data
+  /public/reg:
+    get:
+      description: Страница регистрации
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+      summary: Registration
+  /public/reg/post:
+    post:
+      description: Отправка данных пользователя в базу данных на странице регистрации
+      responses:
+        "200":
+          description: OK
+      summary: Registration posting data
+  /users/about:
+    get:
+      description: Основная информация о проекте
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+      summary: About
+  /users/notes:
+    get:
+      description: Заметки пользователя
+      responses: {}
+      summary: User's notes here
+swagger: "2.0"
