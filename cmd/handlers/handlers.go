@@ -48,13 +48,16 @@ func Handlers(){
 	public.POST("/reg/post", db.Registration)
 	
 // TODO: сделать users/user{uuid}, где uuid получается из базы данных
-	noteID := db.GetNoteID()
-	route := fmt.Sprintf("/notes/:%s", noteID)
+	
+	route := fmt.Sprintf("/notes/:%s", db.GetNoteID)
+
 	users := e.Group("/users")
+
 	users.DELETE(route, db.DeleteNotes)
 	users.GET("/about", h.AboutPage)
 	users.GET("/notes", db.ShowNotes)
-	users.POST("/notes/post", db.ShowNotes)
+	users.POST("/notes/post", db.WriteNotes)
+
 	tmpl, err := template.ParseGlob(
 		"web/templates/*.html", 
 	)

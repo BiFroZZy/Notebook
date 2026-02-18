@@ -15,6 +15,7 @@ import (
 var ctx = context.Background()
 
 type User struct{
+	ID int 
 	NotesData string
 	CreatedAt time.Time
 }
@@ -23,13 +24,13 @@ func ConnectingSQL() (*pgx.Conn, error) {
 	if err != nil{
 		log.Printf("Не могу подключиться к базе данных: %v\n", err)
 	} 
-	_, err = conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS users (
-		ID SERIAL PRIMARY KEY,
-		user_id VARCHAR(100),
-		user_login VARCHAR(50),
-		user_password VARCHAR(50),
-		user_email VARCHAR(100),
-		created_at TIMESTAMP DEFAULT NOW())`)
+	// _, err = conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS users (
+	// 	ID SERIAL PRIMARY KEY,
+	// 	user_id VARCHAR(100),
+	// 	user_login VARCHAR(50),
+	// 	user_password VARCHAR(50),
+	// 	user_email VARCHAR(100),
+	// 	created_at TIMESTAMP DEFAULT NOW())`)
 	if err != nil{
 		log.Printf("Can't create table: %v\n", err)
 	}
@@ -63,10 +64,11 @@ func Registration(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	var login, password, email string
 	err = conn.QueryRow(ctx, "SELECT user_login, user_password, user_email FROM users WHERE user_login = $1 OR user_password = $2", getRegLogin, getRegPassword).Scan(&login, &password, &email)
 	if err != nil{
-		return err
+		log.Printf("Can't get user's info in registration: %v", err)
 	}
 	if getRegLogin == login && getRegPassword == password{
 		return c.Render(http.StatusOK, "reg.html", map[string]interface{}{
@@ -80,6 +82,7 @@ func Registration(c echo.Context) error {
 			"Error": "You already have an account!",
 		})
 	}	
+
 	WriteDataSQL(newUUID.String(), getRegLogin, getRegPassword, getRegEmail)
 	return c.Redirect(http.StatusFound, "/users/notes")
 }	
@@ -131,16 +134,39 @@ func GetUserID() string{
 	}
 	return userID
 }
+func GetNotes() []User{
+	conn, err := ConnectingSQL()
+	if err != nil {
+		log.Printf("%v", err)
+	}
+	usersData := []User{} 
+	rows, err := conn.Query(ctx, "SELECT notes, created_at FROM users_notes")
+	if err != nil{
+		log.Printf("Error in querying with rows: %v", err)
+	}
+	defer rows.Close()
 
-func GetNoteID() string{
+	for rows.Next(){
+		u := User{}
+		if err := rows.Scan(&u.NotesData, &u.CreatedAt); err!= nil{
+			log.Printf("Error in scaning data with rows: %v", err)
+		}
+		usersData = append(usersData, u)
+	}
+	return usersData
+}
+
+func GetNoteID(c echo.Context) string{
 	conn, err := ConnectingSQL()
 	if err != nil{
 		log.Printf("Ошибка в получении ID: %v", err)
 	}
+	
 	var noteID string
 	if err := conn.QueryRow(ctx, "SELECT user_id FROM users").Scan(&noteID);err != nil{
 		log.Printf("%v", err)
 	}
+	c.Set("id", noteID)
 	return noteID
 }
 
@@ -148,12 +174,15 @@ func GetNoteID() string{
 // @Description Заметки пользователя
 // @Router /users/notes [get]
 func ShowNotes(c echo.Context) error{
-	info := WriteNotes(c)
+	// info := WriteNotes(c)
+	info := GetNotes()
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
 		"Title": "Notes", 
 		"Notes": info,
 	})
 }
+
+// надо через c.Set() в отдельной функции сделать так чтобы получать id из базы данных и вставлять в ссылку users/:id  
 // Создать в базе данных ID для заметок - для /users/main/:id - чтобы удалить заметку с этой же id
 func DeleteNotes(c echo.Context) error {
 	conn, err := ConnectingSQL()
@@ -168,7 +197,7 @@ func DeleteNotes(c echo.Context) error {
 	return c.Render(http.StatusOK, "index.html", ShowNotes)
 }
 
-func WriteNotes(c echo.Context) []User {
+func WriteNotes(c echo.Context) error {
 	notes := c.FormValue("write_notes")
 	if notes != ""{
 		conn, err := ConnectingSQL()
@@ -196,18 +225,10 @@ func WriteNotes(c echo.Context) []User {
 			}
 			usersData = append(usersData, u)
 		}
-		// if notes == ""{
-		// 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
-		// 		"Title": "Main",
-		// 		"Notes": usersData,
-		// 		"Error": "Empty field!",
-		// 	})
-		// }
-		// return c.Render(http.StatusOK, "index.html", map[string]interface{}{
-		// 	"Title": "Main", 
-		// 	"Notes": usersData,
-		// })
-		return usersData
+		return c.Render(http.StatusOK, "index.html", map[string]interface{}{
+			"Title": "Notes",
+			"Notes": usersData,
+	})
 	}
 	return nil
 }
