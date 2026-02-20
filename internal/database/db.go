@@ -14,11 +14,12 @@ import (
 
 var ctx = context.Background()
 
-type User struct{
+type Note struct{
 	ID int 
 	NotesData string
 	CreatedAt time.Time
 }
+
 func ConnectingSQL() (*pgx.Conn, error) {
 	conn, err := pgx.Connect(ctx, os.Getenv("PGX_URL"))
 	if err != nil{
@@ -36,6 +37,7 @@ func ConnectingSQL() (*pgx.Conn, error) {
 	}
 	return conn, err
 }
+
 func WriteDataSQL(id, login, password, email string){
 	conn, err := ConnectingSQL()
 	if err != nil {
@@ -85,7 +87,8 @@ func Registration(c echo.Context) error {
 
 	WriteDataSQL(newUUID.String(), getRegLogin, getRegPassword, getRegEmail)
 	return c.Redirect(http.StatusFound, "/users/notes")
-}	
+}
+
 // @Summary Authorization posting data
 // @Description Отправка данных пользователя в базу данных на странице авторизации
 // @Router /public/auth/post [post]
@@ -134,12 +137,13 @@ func GetUserID() string{
 	}
 	return userID
 }
-func GetNotes() []User{
+
+func GetNotes() []Note{
 	conn, err := ConnectingSQL()
 	if err != nil {
 		log.Printf("%v", err)
 	}
-	usersData := []User{} 
+	usersData := []Note{} 
 	rows, err := conn.Query(ctx, "SELECT notes, created_at FROM users_notes")
 	if err != nil{
 		log.Printf("Error in querying with rows: %v", err)
@@ -147,7 +151,7 @@ func GetNotes() []User{
 	defer rows.Close()
 
 	for rows.Next(){
-		u := User{}
+		u := Note{}
 		if err := rows.Scan(&u.NotesData, &u.CreatedAt); err!= nil{
 			log.Printf("Error in scaning data with rows: %v", err)
 		}
@@ -211,7 +215,7 @@ func WriteNotes(c echo.Context) error {
 			log.Printf("Can't insert user's notes in DB: %v", err)
 		}
 		
-		usersData := []User{}
+		usersData := []Note{}
 		rows, err := conn.Query(ctx, "SELECT notes, created_at FROM users_notes")
 		if err != nil{
 			log.Printf("Error in querying with rows: %v", err)
@@ -219,7 +223,7 @@ func WriteNotes(c echo.Context) error {
 		defer rows.Close()
 
 		for rows.Next(){
-			u := User{}
+			u := Note{}
 			if err := rows.Scan(&u.NotesData, &u.CreatedAt); err!= nil{
 				log.Printf("Error in scaning data with rows: %v", err)
 			}
