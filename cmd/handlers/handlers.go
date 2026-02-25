@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+	_"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -37,6 +37,7 @@ func Handlers(){
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 	e.Use(middleware.Secure())
+	
 	public := e.Group("/public")
 
 	e.GET("/", func(c echo.Context) error{
@@ -49,11 +50,11 @@ func Handlers(){
 	
 // TODO: сделать users/user{uuid}, где uuid получается из базы данных
 	
-	route := fmt.Sprintf("/notes/:%s", db.GetNoteID)
+	// route := fmt.Sprintf("/notes/:%v", db.GetNoteID)
 
-	users := e.Group("/users")
+	users := e.Group("/users/:user_id")
 
-	users.DELETE(route, db.DeleteNotes)
+	// users.DELETE(route, db.DeleteNotes)
 	users.GET("/about", h.AboutPage)
 	users.GET("/notes", db.ShowNotes)
 	users.POST("/notes/post", db.WriteNotes)
@@ -68,5 +69,5 @@ func Handlers(){
 	e.Renderer = &Template{templates: tmpl}
 	e.Static("/web/css/", "web/css/styles.css")
 	
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Logger.Fatal(e.Start(":9080"))
 }

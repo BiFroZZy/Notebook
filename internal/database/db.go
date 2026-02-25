@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	
 	"time"
 
 	"github.com/google/uuid"
@@ -15,9 +16,14 @@ import (
 var ctx = context.Background()
 
 type Note struct{
-	ID int 
+	ID string 
 	NotesData string
 	CreatedAt time.Time
+	UserID string
+}
+
+type User struct{
+	ID string
 }
 
 func ConnectingSQL() (*pgx.Conn, error) {
@@ -25,13 +31,7 @@ func ConnectingSQL() (*pgx.Conn, error) {
 	if err != nil{
 		log.Printf("Не могу подключиться к базе данных: %v\n", err)
 	} 
-	// _, err = conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS users (
-	// 	ID SERIAL PRIMARY KEY,
-	// 	user_id VARCHAR(100),
-	// 	user_login VARCHAR(50),
-	// 	user_password VARCHAR(50),
-	// 	user_email VARCHAR(100),
-	// 	created_at TIMESTAMP DEFAULT NOW())`)
+	_, err = conn.Exec(ctx, os.Getenv("CREATE_TABLE"))
 	if err != nil{
 		log.Printf("Can't create table: %v\n", err)
 	}
@@ -45,9 +45,7 @@ func WriteDataSQL(id, login, password, email string){
 	}
 	defer conn.Close(ctx)
 
-	_, err = conn.Exec(ctx, 
-		`INSERT INTO users (user_id, user_login, user_password, user_email) 
-		VALUES ($1, $2, $3, $4)`, id, login, password, email)
+	_, err = conn.Exec(ctx, os.Getenv("WRITE_SQL_QUERY"), id, login, password, email)
 	if err != nil{
 		log.Printf("Can't insert data in table: %v\n", err)
 	}
@@ -68,7 +66,7 @@ func Registration(c echo.Context) error {
 	}
 
 	var login, password, email string
-	err = conn.QueryRow(ctx, "SELECT user_login, user_password, user_email FROM users WHERE user_login = $1 OR user_password = $2", getRegLogin, getRegPassword).Scan(&login, &password, &email)
+	err = conn.QueryRow(ctx, os.Getenv("REG_QUERY"), getRegLogin, getRegPassword).Scan(&login, &password, &email)
 	if err != nil{
 		log.Printf("Can't get user's info in registration: %v", err)
 	}
@@ -83,10 +81,10 @@ func Registration(c echo.Context) error {
 			"Title": "Registration",
 			"Error": "You already have an account!",
 		})
-	}	
-
-	WriteDataSQL(newUUID.String(), getRegLogin, getRegPassword, getRegEmail)
-	return c.Redirect(http.StatusFound, "/users/notes")
+	}		
+	stringUUID := newUUID.String()
+	WriteDataSQL(stringUUID, getRegLogin, getRegPassword, getRegEmail)
+	return c.Redirect(http.StatusFound, "/users/"+stringUUID+"/notes")
 }
 
 // @Summary Authorization posting data
@@ -102,12 +100,18 @@ func Authorization(c echo.Context) error{
 
 	getAuthLogin := c.FormValue("auth_login")
 	getAuthPassword := c.FormValue("auth_password")
-
+	
 	var login, password string
-	err = conn.QueryRow(ctx, "SELECT user_login, user_password FROM users WHERE user_login = $1", getAuthLogin).Scan(&login, &password)
+	err = conn.QueryRow(ctx, os.Getenv("AUTH_QUERY"), getAuthLogin).Scan(&login, &password)
 	if err != nil{
 		log.Printf("%v", err)
 	}
+	// c.Set("user_id", id)
+	// getID := c.Get(id)
+	userID := GetUserID()
+
+	log.Println("ID: ", userID)
+
 	if err == pgx.ErrNoRows{
 		return c.Render(http.StatusOK, "auth.html", map[string]interface{}{
 			"Title": "Authorization",
@@ -115,7 +119,7 @@ func Authorization(c echo.Context) error{
 		})
 	}
 	if password == getAuthPassword && login == getAuthLogin{
-		c.Redirect(http.StatusFound, "/users/notes")
+		c.Redirect(http.StatusFound, "/users/"+userID+"/notes")
 	} else {
 		c.Render(http.StatusOK, "auth.html", map[string]interface{}{
 			"Title": "Authorization",
@@ -131,7 +135,8 @@ func GetUserID() string{
 		log.Printf("Ошибка в получении ID: %v", err)
 	}
 	var userID string
-	err = conn.QueryRow(ctx, "SELECT user_id FROM users").Scan(&userID)
+	// надо сделать какой нить ID для того чтобы отсканить почеловечески с WHERE в БД для точности
+	err = conn.QueryRow(ctx, os.Getenv("GET_USER_ID_QUERY")).Scan(&userID)
 	if err != nil{
 		log.Printf("%v", err)
 	}
@@ -144,7 +149,7 @@ func GetNotes() []Note{
 		log.Printf("%v", err)
 	}
 	usersData := []Note{} 
-	rows, err := conn.Query(ctx, "SELECT notes, created_at FROM users_notes")
+	rows, err := conn.Query(ctx, os.Getenv("GET_NOTES"))
 	if err != nil{
 		log.Printf("Error in querying with rows: %v", err)
 	}
@@ -159,7 +164,7 @@ func GetNotes() []Note{
 	}
 	return usersData
 }
-
+// возвращает ID записки
 func GetNoteID(c echo.Context) string{
 	conn, err := ConnectingSQL()
 	if err != nil{
@@ -167,7 +172,7 @@ func GetNoteID(c echo.Context) string{
 	}
 	
 	var noteID string
-	if err := conn.QueryRow(ctx, "SELECT user_id FROM users").Scan(&noteID);err != nil{
+	if err := conn.QueryRow(ctx, os.Getenv("GET_NOTE_ID")).Scan(&noteID);err != nil{
 		log.Printf("%v", err)
 	}
 	c.Set("id", noteID)
@@ -178,11 +183,14 @@ func GetNoteID(c echo.Context) string{
 // @Description Заметки пользователя
 // @Router /users/notes [get]
 func ShowNotes(c echo.Context) error{
-	// info := WriteNotes(c)
 	info := GetNotes()
+	userID := GetUserID()
+	user := User{}
+	user.ID = userID
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
 		"Title": "Notes", 
 		"Notes": info,
+		"UserID": user.ID,
 	})
 }
 
@@ -194,7 +202,7 @@ func DeleteNotes(c echo.Context) error {
 		log.Printf("%v", err)
 	}
 	noteID := c.Param("id")
-	_, err = conn.Exec(ctx, "DELETE FROM users_notes WHERE id = $1", noteID)
+	_, err = conn.Exec(ctx, os.Getenv("DELETE_NOTES"), noteID)
 	if err != nil{
 		log.Printf("Can't delete the note: %v", err)
 	}
@@ -203,6 +211,7 @@ func DeleteNotes(c echo.Context) error {
 
 func WriteNotes(c echo.Context) error {
 	notes := c.FormValue("write_notes")
+
 	if notes != ""{
 		conn, err := ConnectingSQL()
 		if err != nil{
@@ -210,29 +219,11 @@ func WriteNotes(c echo.Context) error {
 		}
 		defer conn.Close(ctx)
 
-		_, err = conn.Exec(ctx, "INSERT INTO users_notes(notes) VALUES ($1)", notes)
+		_, err = conn.Exec(ctx, os.Getenv("WRITE_NOTES"), notes)
 		if err != nil{
 			log.Printf("Can't insert user's notes in DB: %v", err)
 		}
-		
-		usersData := []Note{}
-		rows, err := conn.Query(ctx, "SELECT notes, created_at FROM users_notes")
-		if err != nil{
-			log.Printf("Error in querying with rows: %v", err)
-		}
-		defer rows.Close()
-
-		for rows.Next(){
-			u := Note{}
-			if err := rows.Scan(&u.NotesData, &u.CreatedAt); err!= nil{
-				log.Printf("Error in scaning data with rows: %v", err)
-			}
-			usersData = append(usersData, u)
-		}
-		return c.Render(http.StatusOK, "index.html", map[string]interface{}{
-			"Title": "Notes",
-			"Notes": usersData,
-	})
+		return ShowNotes(c)
 	}
 	return nil
 }

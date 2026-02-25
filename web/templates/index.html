@@ -17,8 +17,8 @@
     <body>
         <nav class="navigation">
             <a href="/public/auth">Авторизация</a>
-            <a href="/users/notes">Домашняя страница</a>
-            <a href="/users/about">Информация</a>
+            <a href="/users/{{.UserID}}/notes">Домашняя страница</a>
+            <a href="/users/{{.UserID}}/about">Информация</a>
         </nav>
         <main>
             <h2>Последние заметки</h2>
@@ -28,7 +28,7 @@
                 </div>
             {{ end }}
                 <div class="main_notes">
-                    <form action="/users/notes/post" method="post">
+                    <form action="/users/{{.UserID}}/notes/post" method="post">
                         <label for="write_notes">Введите текст для заметок: </label>
                         <input type="text" id="write_notes" name="write_notes" required>
                         <button>Enter</button>
@@ -37,7 +37,7 @@
                         <ul class="user_notes">
                             {{ range .Notes }}
                                 <li>
-                                    <form action="/users/notes/:id">
+                                    <form action="/users/{{.UserID}}/notes/delete" class="delete_notes">
                                         {{ .NotesData }}<button class="del_button">Удалить</button>
                                     </form>
                                 </li>
@@ -50,6 +50,7 @@
         </main>
     </body>
 </html>
+
 <style>
     body {
         background-color: #f3e9ff !important;
@@ -57,6 +58,9 @@
         padding: 0;
         min-height: 100vh;
         font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    .delete_notes{
+        text-align: right;
     }
     .del_button{
         background-color: rgb(234, 54, 54);

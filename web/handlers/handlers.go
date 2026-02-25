@@ -2,14 +2,11 @@ package handlers
 
 import (
 	"net/http"
+	
 	"github.com/labstack/echo/v4"
-	// db "notebook/internal/database"
+
+	db "notebook/internal/database"
 )
-// func MainPage(c echo.Context) error{
-// 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
-// 		"Title": "Main",
-// 	})
-// }
 
 // @Summary Authorization 
 // @Description Страница авторизации
@@ -19,6 +16,7 @@ import (
 func AuthPage(c echo.Context) error{
 	return c.Render(http.StatusOK, "auth.html", map[string]interface{}{
 		"Title": "Authorization",
+		
 	})
 }
 
@@ -39,7 +37,11 @@ func RegPage(c echo.Context) error{
 // @Produce html
 // @Success 200
 func AboutPage(c echo.Context) error{
+	userID := db.GetUserID()
+	user := db.User{}
+	user.ID = userID
 	return c.Render(http.StatusOK, "about.html", map[string]interface{}{
 		"Title": "About",
+		"UserID": user.ID,
 	})
 }

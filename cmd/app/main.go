@@ -13,10 +13,10 @@ import (
 // @Description Записки для пользователей
 // @version 1.0
 // @Host localhost
-// @BasePath 
+// @BasePath
 
-func main(){
-	if err := godotenv.Load(); err != nil{
+func main() {
+	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Can't load env file: %v\n", err)
 	}
 	handlers.Handlers()
