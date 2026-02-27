@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	_"fmt"
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -50,11 +50,11 @@ func Handlers(){
 	
 // TODO: сделать users/user{uuid}, где uuid получается из базы данных
 	
-	// route := fmt.Sprintf("/notes/:%v", db.GetNoteID)
+	route := fmt.Sprintf("/notes/:%v", db.GetNoteID)
 
 	users := e.Group("/users/:user_id")
 
-	// users.DELETE(route, db.DeleteNotes)
+	users.DELETE(route, db.DeleteNotes)
 	users.GET("/about", h.AboutPage)
 	users.GET("/notes", db.ShowNotes)
 	users.POST("/notes/post", db.WriteNotes)
@@ -67,7 +67,7 @@ func Handlers(){
 	}
 
 	e.Renderer = &Template{templates: tmpl}
-	e.Static("/web/css/", "web/css/styles.css")
+	//e.Static("/web/css/", "web/css/styles.css")
 	
 	e.Logger.Fatal(e.Start(":9080"))
 }

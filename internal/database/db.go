@@ -5,21 +5,28 @@ import (
 	"log"
 	"net/http"
 	"os"
-	
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
+	"github.com/go-playground/validator/v10"
 )
 
 var ctx = context.Background()
+var validate *validator.Validate
 
+func init(){
+	validate = validator.New()
+}
+//  "github.com/go-playground/validator/v10"
+// использовать validate - 'validate: "datetime=2006-01-02"'
 type Note struct{
 	ID string 
+	UUID uuid.UUID
 	NotesData string
-	CreatedAt time.Time
-	UserID string
+	CreatedAt time.Time //`validate:"datetime=2006-01-02"`
+	UserID string	
 }
 
 type User struct{
@@ -128,17 +135,29 @@ func Authorization(c echo.Context) error{
 	}
 	return c.Redirect(http.StatusOK, "/public/reg")
 }
-
+// пофиксить баг где id берется не правильно, по почте, почему то из базы даннных берет самого ластового чела после его регистрации
 func GetUserID() string{
 	conn, err := ConnectingSQL()
 	if err != nil{
 		log.Printf("Ошибка в получении ID: %v", err)
 	}
-	var userID string
-	// надо сделать какой нить ID для того чтобы отсканить почеловечески с WHERE в БД для точности
-	err = conn.QueryRow(ctx, os.Getenv("GET_USER_ID_QUERY")).Scan(&userID)
+	var userID, email string
+	rows, err := conn.Query(ctx, os.Getenv("GET_USER_ID_EMAIL"))
 	if err != nil{
-		log.Printf("%v", err)
+		log.Printf("Error in querying with rows: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next(){
+		err = rows.Scan(&email)
+		if err != nil{
+			log.Printf("%v", err)
+		}
+	}
+	// надо сделать какой нить ID для того чтобы отсканить почеловечески с WHERE в БД для точности
+	err = conn.QueryRow(ctx, os.Getenv("GET_USER_ID_QUERY"), email).Scan(&userID)
+	if err != nil{
+		log.Printf("Error in querying the row in getting user's ID: %v", err)
 	}
 	return userID
 }
@@ -146,8 +165,9 @@ func GetUserID() string{
 func GetNotes() []Note{
 	conn, err := ConnectingSQL()
 	if err != nil {
-		log.Printf("%v", err)
+		log.Printf("Error in getting notes: %v", err)
 	}
+
 	usersData := []Note{} 
 	rows, err := conn.Query(ctx, os.Getenv("GET_NOTES"))
 	if err != nil{
@@ -156,27 +176,30 @@ func GetNotes() []Note{
 	defer rows.Close()
 
 	for rows.Next(){
-		u := Note{}
-		if err := rows.Scan(&u.NotesData, &u.CreatedAt); err!= nil{
+		note := Note{}
+	
+		if err := rows.Scan(&note.NotesData, &note.CreatedAt); err!= nil{
 			log.Printf("Error in scaning data with rows: %v", err)
 		}
-		usersData = append(usersData, u)
+		
+		usersData = append(usersData, note)
 	}
 	return usersData
 }
+
 // возвращает ID записки
-func GetNoteID(c echo.Context) string{
+func GetNoteID() (string, string){
 	conn, err := ConnectingSQL()
 	if err != nil{
 		log.Printf("Ошибка в получении ID: %v", err)
 	}
 	
-	var noteID string
-	if err := conn.QueryRow(ctx, os.Getenv("GET_NOTE_ID")).Scan(&noteID);err != nil{
-		log.Printf("%v", err)
+	var noteID, noteUUID string
+	if err := conn.QueryRow(ctx, os.Getenv("GET_NOTE_ID_UUID")).Scan(&noteID, &noteUUID);err != nil{
+		log.Printf("Error in querying the row in getting note id: %v", err)
 	}
-	c.Set("id", noteID)
-	return noteID
+	// c.Set("id", noteID)
+	return noteID, noteUUID
 }
 
 // @Summary User's notes here
@@ -201,16 +224,23 @@ func DeleteNotes(c echo.Context) error {
 	if err != nil{
 		log.Printf("%v", err)
 	}
-	noteID := c.Param("id")
-	_, err = conn.Exec(ctx, os.Getenv("DELETE_NOTES"), noteID)
+	// noteID := c.Param("id")
+	_, noteUUID := GetNoteID()
+
+	userID := GetUserID()
+
+	_, err = conn.Exec(ctx, os.Getenv("DELETE_NOTES"), noteUUID)
 	if err != nil{
 		log.Printf("Can't delete the note: %v", err)
 	}
-	return c.Render(http.StatusOK, "index.html", ShowNotes)
+	// return c.Render(http.StatusOK, "index.html", ShowNotes)
+	return c.Redirect(http.StatusFound, "/users/"+userID+"/notes/delete")
 }
 
 func WriteNotes(c echo.Context) error {
 	notes := c.FormValue("write_notes")
+	notesUUID := uuid.New()
+	strUUID := notesUUID.String()
 
 	if notes != ""{
 		conn, err := ConnectingSQL()
@@ -219,7 +249,7 @@ func WriteNotes(c echo.Context) error {
 		}
 		defer conn.Close(ctx)
 
-		_, err = conn.Exec(ctx, os.Getenv("WRITE_NOTES"), notes)
+		_, err = conn.Exec(ctx, os.Getenv("WRITE_NOTES"), strUUID, notes)
 		if err != nil{
 			log.Printf("Can't insert user's notes in DB: %v", err)
 		}
