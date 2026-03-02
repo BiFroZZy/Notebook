@@ -37,7 +37,7 @@
                         <ul class="user_notes">
                             {{ range .Notes }}
                                 <li>
-                                    <form action="/users/{{.UserID}}/notes/delete" class="delete_notes">
+                                    <form action="/users/{{.UserID}}/notes/{{.UUID}}/delete" class="delete_notes">
                                         <div class="notesData">
                                             {{ .NotesData }}<button class="del_button">Удалить</button>
                                         </div>

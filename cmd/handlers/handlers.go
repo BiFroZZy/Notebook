@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+	_"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -28,21 +28,21 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 func Handlers(){
 	e := echo.New()
 
+	e.Use(middleware.RequestLogger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
+	e.Use(middleware.Secure())
+
 	e.GET("/swagger/*", echo.WrapHandler(httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
 		httpSwagger.DeepLinking(true),
         httpSwagger.DocExpansion("none"),
 	)))
-	e.Use(middleware.RequestLogger())
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
-	e.Use(middleware.Secure())
-	
-	public := e.Group("/public")
-
 	e.GET("/", func(c echo.Context) error{
 		return c.Render(http.StatusOK, "auth.html", nil)
 	})
+
+	public := e.Group("/public")	
 	public.POST("/auth/post", db.Authorization)
 	public.GET("/auth", h.AuthPage)
 	public.GET("/reg", h.RegPage)
@@ -50,11 +50,10 @@ func Handlers(){
 	
 // TODO: сделать users/user{uuid}, где uuid получается из базы данных
 	
-	route := fmt.Sprintf("/notes/:%v", db.GetNoteID)
+	// route := fmt.Sprintf("/notes/:%v", db.GetNoteID)
 
 	users := e.Group("/users/:user_id")
-
-	users.DELETE(route, db.DeleteNotes)
+	users.DELETE("/notes/:note_id/delete", db.DeleteNotes)
 	users.GET("/about", h.AboutPage)
 	users.GET("/notes", db.ShowNotes)
 	users.POST("/notes/post", db.WriteNotes)
@@ -67,7 +66,6 @@ func Handlers(){
 	}
 
 	e.Renderer = &Template{templates: tmpl}
-	//e.Static("/web/css/", "web/css/styles.css")
-	
+	e.Static("/web/css/", "web/css/styles.css")
 	e.Logger.Fatal(e.Start(":9080"))
 }

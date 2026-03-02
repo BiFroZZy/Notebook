@@ -27,6 +27,7 @@ type Note struct{
 	NotesData string
 	CreatedAt time.Time //`validate:"datetime=2006-01-02"`
 	UserID string	
+	NoteID string
 }
 
 type User struct{
@@ -111,7 +112,7 @@ func Authorization(c echo.Context) error{
 	var login, password string
 	err = conn.QueryRow(ctx, os.Getenv("AUTH_QUERY"), getAuthLogin).Scan(&login, &password)
 	if err != nil{
-		log.Printf("%v", err)
+		log.Printf("%v\n", err)
 	}
 	// c.Set("user_id", id)
 	// getID := c.Get(id)
@@ -139,25 +140,25 @@ func Authorization(c echo.Context) error{
 func GetUserID() string{
 	conn, err := ConnectingSQL()
 	if err != nil{
-		log.Printf("Ошибка в получении ID: %v", err)
+		log.Printf("Ошибка в получении ID: %v\n", err)
 	}
 	var userID, email string
 	rows, err := conn.Query(ctx, os.Getenv("GET_USER_ID_EMAIL"))
 	if err != nil{
-		log.Printf("Error in querying with rows: %v", err)
+		log.Printf("Error in querying with rows: %v\n", err)
 	}
 	defer rows.Close()
 
 	for rows.Next(){
 		err = rows.Scan(&email)
 		if err != nil{
-			log.Printf("%v", err)
+			log.Printf("%v\n", err)
 		}
 	}
 	// надо сделать какой нить ID для того чтобы отсканить почеловечески с WHERE в БД для точности
 	err = conn.QueryRow(ctx, os.Getenv("GET_USER_ID_QUERY"), email).Scan(&userID)
 	if err != nil{
-		log.Printf("Error in querying the row in getting user's ID: %v", err)
+		log.Printf("Error in querying the row in getting user's ID: %v\n", err)
 	}
 	return userID
 }
@@ -165,13 +166,13 @@ func GetUserID() string{
 func GetNotes() []Note{
 	conn, err := ConnectingSQL()
 	if err != nil {
-		log.Printf("Error in getting notes: %v", err)
+		log.Printf("Error in getting notes: %v\n", err)
 	}
 
 	usersData := []Note{} 
 	rows, err := conn.Query(ctx, os.Getenv("GET_NOTES"))
 	if err != nil{
-		log.Printf("Error in querying with rows: %v", err)
+		log.Printf("Error in querying with rows: %v\n", err)
 	}
 	defer rows.Close()
 
@@ -179,7 +180,7 @@ func GetNotes() []Note{
 		note := Note{}
 	
 		if err := rows.Scan(&note.NotesData, &note.CreatedAt); err!= nil{
-			log.Printf("Error in scaning data with rows: %v", err)
+			log.Printf("Error in scaning data with rows: %v\n", err)
 		}
 		
 		usersData = append(usersData, note)
@@ -188,15 +189,18 @@ func GetNotes() []Note{
 }
 
 // возвращает ID записки
-func GetNoteID() (string, string){
+func GetNoteID() (string, uuid.UUID){
 	conn, err := ConnectingSQL()
 	if err != nil{
-		log.Printf("Ошибка в получении ID: %v", err)
+		log.Printf("Ошибка в получении ID: %v\n", err)
 	}
+	defer conn.Close(ctx)
 	
-	var noteID, noteUUID string
+	var (noteID string
+		noteUUID uuid.UUID)
+		
 	if err := conn.QueryRow(ctx, os.Getenv("GET_NOTE_ID_UUID")).Scan(&noteID, &noteUUID);err != nil{
-		log.Printf("Error in querying the row in getting note id: %v", err)
+		log.Printf("Error in querying the row in getting note id/uuid: %v\n", err)
 	}
 	// c.Set("id", noteID)
 	return noteID, noteUUID
@@ -210,10 +214,13 @@ func ShowNotes(c echo.Context) error{
 	userID := GetUserID()
 	user := User{}
 	user.ID = userID
+	_, UUID := GetNoteID()
+
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
 		"Title": "Notes", 
 		"Notes": info,
 		"UserID": user.ID,
+		"NoteID": UUID,
 	})
 }
 
@@ -222,19 +229,19 @@ func ShowNotes(c echo.Context) error{
 func DeleteNotes(c echo.Context) error {
 	conn, err := ConnectingSQL()
 	if err != nil{
-		log.Printf("%v", err)
+		log.Printf("%v\n", err)
 	}
-	// noteID := c.Param("id")
+	defer conn.Close(ctx)
+
 	_, noteUUID := GetNoteID()
-
-	userID := GetUserID()
-
+	strUUID := noteUUID.String()
 	_, err = conn.Exec(ctx, os.Getenv("DELETE_NOTES"), noteUUID)
 	if err != nil{
-		log.Printf("Can't delete the note: %v", err)
+		log.Printf("Can't delete the note: %v\n", err)
 	}
-	// return c.Render(http.StatusOK, "index.html", ShowNotes)
-	return c.Redirect(http.StatusFound, "/users/"+userID+"/notes/delete")
+	//return ShowNotes(c)
+	return c.Redirect(http.StatusOK, "/users/"+GetUserID()+"/notes/"+strUUID+"/delete")
+	// return c.Redirect(http.StatusFound, "/users/"+userID+"/notes/delete")
 }
 
 func WriteNotes(c echo.Context) error {
@@ -245,13 +252,13 @@ func WriteNotes(c echo.Context) error {
 	if notes != ""{
 		conn, err := ConnectingSQL()
 		if err != nil{
-			log.Printf("%v", err)
+			log.Printf("%v\n", err)
 		}
 		defer conn.Close(ctx)
 
 		_, err = conn.Exec(ctx, os.Getenv("WRITE_NOTES"), strUUID, notes)
 		if err != nil{
-			log.Printf("Can't insert user's notes in DB: %v", err)
+			log.Printf("Can't insert user's notes in DB: %v\n", err)
 		}
 		return ShowNotes(c)
 	}
