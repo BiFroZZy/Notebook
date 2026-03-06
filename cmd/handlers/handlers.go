@@ -4,7 +4,6 @@ import (
 	_"fmt"
 	"html/template"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -13,8 +12,11 @@ import (
 
 	db "notebook/internal/database"
 	h "notebook/web/handlers"
+	l "notebook/internal/logger"
 	_"notebook/docs"
 )
+
+var logger = l.NewLogger()
 
 type Template struct{
 	templates *template.Template
@@ -62,7 +64,7 @@ func Handlers(){
 		"web/templates/*.html", 
 	)
 	if err != nil{
-		log.Printf("Ошибка парсинга HTML-шаблона: %v\n", err)
+		logger.Err(err).Msg("Error in parsing HTML templates in handler!")
 	}
 
 	e.Renderer = &Template{templates: tmpl}

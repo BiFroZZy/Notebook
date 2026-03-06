@@ -2,32 +2,30 @@ package database
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
-	"github.com/go-playground/validator/v10"
+
+	l "notebook/internal/logger"
 )
 
-var ctx = context.Background()
-var validate *validator.Validate
-
-func init(){
-	validate = validator.New()
-}
-//  "github.com/go-playground/validator/v10"
-// использовать validate - 'validate: "datetime=2006-01-02"'
+var (
+	ctx = context.Background()
+	validate *validator.Validate
+	logger = l.NewLogger()
+) 
 type Note struct{
-	ID string 
-	UUID uuid.UUID
-	NotesData string
+	ID string `validate:"numeric"`
+	UUID uuid.UUID `validate:"uuid"`
+	NotesData string 
 	CreatedAt time.Time //`validate:"datetime=2006-01-02"`
-	UserID string	
-	NoteID string
+	UserID string `validate:"uuid"`
+	NoteID string `validate:"uuid"`
 }
 
 type User struct{
@@ -37,11 +35,11 @@ type User struct{
 func ConnectingSQL() (*pgx.Conn, error) {
 	conn, err := pgx.Connect(ctx, os.Getenv("PGX_URL"))
 	if err != nil{
-		log.Printf("Не могу подключиться к базе данных: %v\n", err)
+		logger.Err(err).Msg("Can't connect to database\n")
 	} 
 	_, err = conn.Exec(ctx, os.Getenv("CREATE_TABLE"))
 	if err != nil{
-		log.Printf("Can't create table: %v\n", err)
+		logger.Err(err).Msg("Can't create table\n")
 	}
 	return conn, err
 }
@@ -49,13 +47,13 @@ func ConnectingSQL() (*pgx.Conn, error) {
 func WriteDataSQL(id, login, password, email string){
 	conn, err := ConnectingSQL()
 	if err != nil {
-		log.Printf("Database connection error: %v\n", err)
+		logger.Err(err).Msg("Can't connect to database while writing data\n")
 	}
 	defer conn.Close(ctx)
 
 	_, err = conn.Exec(ctx, os.Getenv("WRITE_SQL_QUERY"), id, login, password, email)
 	if err != nil{
-		log.Printf("Can't insert data in table: %v\n", err)
+		logger.Err(err).Msg("Can't insert data to database\n")
 	}
 }	
 // @Summary Registration posting data 
@@ -70,13 +68,13 @@ func Registration(c echo.Context) error {
 	
 	conn, err := ConnectingSQL()
 	if err != nil {
-		return err
+		logger.Err(err).Msg("Can't connect to database\n")
 	}
 
 	var login, password, email string
 	err = conn.QueryRow(ctx, os.Getenv("REG_QUERY"), getRegLogin, getRegPassword).Scan(&login, &password, &email)
 	if err != nil{
-		log.Printf("Can't get user's info in registration: %v", err)
+		logger.Err(err).Msg("Can't get user's info in registration\n")
 	}
 	if getRegLogin == login && getRegPassword == password{
 		return c.Render(http.StatusOK, "reg.html", map[string]interface{}{
@@ -102,7 +100,7 @@ func Registration(c echo.Context) error {
 func Authorization(c echo.Context) error{
 	conn, err := ConnectingSQL()
 	if err != nil{
-		log.Printf("Database connection error: %v\n", err)
+		logger.Err(err).Msg("Can't connect to database\n")
 	}
 	defer conn.Close(ctx)
 
@@ -112,13 +110,11 @@ func Authorization(c echo.Context) error{
 	var login, password string
 	err = conn.QueryRow(ctx, os.Getenv("AUTH_QUERY"), getAuthLogin).Scan(&login, &password)
 	if err != nil{
-		log.Printf("%v\n", err)
+		logger.Err(err).Msg("Error in querying data in authorization\n")
 	}
-	// c.Set("user_id", id)
-	// getID := c.Get(id)
 	userID := GetUserID()
 
-	log.Println("ID: ", userID)
+	logger.Info().Msg("UserID: "+userID)
 
 	if err == pgx.ErrNoRows{
 		return c.Render(http.StatusOK, "auth.html", map[string]interface{}{
@@ -140,25 +136,25 @@ func Authorization(c echo.Context) error{
 func GetUserID() string{
 	conn, err := ConnectingSQL()
 	if err != nil{
-		log.Printf("Ошибка в получении ID: %v\n", err)
+		logger.Err(err).Msg("Can't get an ID\n")
 	}
 	var userID, email string
 	rows, err := conn.Query(ctx, os.Getenv("GET_USER_ID_EMAIL"))
 	if err != nil{
-		log.Printf("Error in querying with rows: %v\n", err)
+		logger.Err(err).Msg("Error in querying userID\n")
 	}
 	defer rows.Close()
 
 	for rows.Next(){
 		err = rows.Scan(&email)
 		if err != nil{
-			log.Printf("%v\n", err)
+			logger.Err(err).Msg("Error in querying with rows\n")
 		}
 	}
 	// надо сделать какой нить ID для того чтобы отсканить почеловечески с WHERE в БД для точности
 	err = conn.QueryRow(ctx, os.Getenv("GET_USER_ID_QUERY"), email).Scan(&userID)
 	if err != nil{
-		log.Printf("Error in querying the row in getting user's ID: %v\n", err)
+		logger.Err(err).Msg("Error in querying the row in getting user's ID\n")
 	}
 	return userID
 }
@@ -166,13 +162,13 @@ func GetUserID() string{
 func GetNotes() []Note{
 	conn, err := ConnectingSQL()
 	if err != nil {
-		log.Printf("Error in getting notes: %v\n", err)
+		logger.Err(err).Msg("Error in getting notes\n")
 	}
 
 	usersData := []Note{} 
 	rows, err := conn.Query(ctx, os.Getenv("GET_NOTES"))
 	if err != nil{
-		log.Printf("Error in querying with rows: %v\n", err)
+		logger.Err(err).Msg("Error in querying with rows\n")
 	}
 	defer rows.Close()
 
@@ -180,7 +176,7 @@ func GetNotes() []Note{
 		note := Note{}
 	
 		if err := rows.Scan(&note.NotesData, &note.CreatedAt); err!= nil{
-			log.Printf("Error in scaning data with rows: %v\n", err)
+			logger.Err(err).Msg("Error in scaning data with rows\n")
 		}
 		
 		usersData = append(usersData, note)
@@ -192,7 +188,7 @@ func GetNotes() []Note{
 func GetNoteID() (string, uuid.UUID){
 	conn, err := ConnectingSQL()
 	if err != nil{
-		log.Printf("Ошибка в получении ID: %v\n", err)
+		logger.Err(err).Msg("Error in getting ID\n")
 	}
 	defer conn.Close(ctx)
 	
@@ -200,9 +196,8 @@ func GetNoteID() (string, uuid.UUID){
 		noteUUID uuid.UUID)
 		
 	if err := conn.QueryRow(ctx, os.Getenv("GET_NOTE_ID_UUID")).Scan(&noteID, &noteUUID);err != nil{
-		log.Printf("Error in querying the row in getting note id/uuid: %v\n", err)
+		logger.Err(err).Msg("Error in querying the row in getting note id/uuid\n")
 	}
-	// c.Set("id", noteID)
 	return noteID, noteUUID
 }
 
@@ -229,7 +224,7 @@ func ShowNotes(c echo.Context) error{
 func DeleteNotes(c echo.Context) error {
 	conn, err := ConnectingSQL()
 	if err != nil{
-		log.Printf("%v\n", err)
+		logger.Err(err).Msg("Can't connect to database\n")
 	}
 	defer conn.Close(ctx)
 
@@ -237,11 +232,9 @@ func DeleteNotes(c echo.Context) error {
 	strUUID := noteUUID.String()
 	_, err = conn.Exec(ctx, os.Getenv("DELETE_NOTES"), noteUUID)
 	if err != nil{
-		log.Printf("Can't delete the note: %v\n", err)
+		logger.Err(err).Msg("Can't delete the note\n")
 	}
-	//return ShowNotes(c)
 	return c.Redirect(http.StatusOK, "/users/"+GetUserID()+"/notes/"+strUUID+"/delete")
-	// return c.Redirect(http.StatusFound, "/users/"+userID+"/notes/delete")
 }
 
 func WriteNotes(c echo.Context) error {
@@ -252,13 +245,13 @@ func WriteNotes(c echo.Context) error {
 	if notes != ""{
 		conn, err := ConnectingSQL()
 		if err != nil{
-			log.Printf("%v\n", err)
+			logger.Err(err).Msg("Can't connect to database\n")
 		}
 		defer conn.Close(ctx)
 
 		_, err = conn.Exec(ctx, os.Getenv("WRITE_NOTES"), strUUID, notes)
 		if err != nil{
-			log.Printf("Can't insert user's notes in DB: %v\n", err)
+			logger.Err(err).Msg("Can't insert user's notes in DB\n")
 		}
 		return ShowNotes(c)
 	}
