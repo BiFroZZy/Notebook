@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	db "notebook/internal/database"
+	mod "notebook/internal/models"
 )
 
 // @Summary Authorization 
@@ -38,7 +39,7 @@ func RegPage(c echo.Context) error{
 // @Success 200
 func AboutPage(c echo.Context) error{
 	userID := db.GetUserID()
-	user := db.User{}
+	user := mod.User{}
 	user.ID = userID
 	return c.Render(http.StatusOK, "about.html", map[string]interface{}{
 		"Title": "About",

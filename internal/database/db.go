@@ -4,14 +4,15 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"time"
-
+	
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 
 	l "notebook/internal/logger"
+	mod "notebook/internal/models"
 )
 
 var (
@@ -19,17 +20,13 @@ var (
 	validate *validator.Validate
 	logger = l.NewLogger()
 ) 
-type Note struct{
-	ID string `validate:"numeric"`
-	UUID uuid.UUID `validate:"uuid"`
-	NotesData string 
-	CreatedAt time.Time //`validate:"datetime=2006-01-02"`
-	UserID string `validate:"uuid"`
-	NoteID string `validate:"uuid"`
-}
 
-type User struct{
-	ID string
+func HashingFunc(password string) (hashedPass []byte){
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil{
+		logger.Err(err).Msg("Error while hashing the password!")
+	}
+	return hashedPass
 }
 
 func ConnectingSQL() (*pgx.Conn, error) {
@@ -56,82 +53,7 @@ func WriteDataSQL(id, login, password, email string){
 		logger.Err(err).Msg("Can't insert data to database\n")
 	}
 }	
-// @Summary Registration posting data 
-// @Description Отправка данных пользователя в базу данных на странице регистрации
-// @Router /public/reg/post [post]
-// @Success 200
-func Registration(c echo.Context) error {
-	getRegLogin := c.FormValue("reg_login")
-	getRegPassword := c.FormValue("reg_password")
-	getRegEmail := c.FormValue("reg_email")
-	newUUID := uuid.New()
-	
-	conn, err := ConnectingSQL()
-	if err != nil {
-		logger.Err(err).Msg("Can't connect to database\n")
-	}
 
-	var login, password, email string
-	err = conn.QueryRow(ctx, os.Getenv("REG_QUERY"), getRegLogin, getRegPassword).Scan(&login, &password, &email)
-	if err != nil{
-		logger.Err(err).Msg("Can't get user's info in registration\n")
-	}
-	if getRegLogin == login && getRegPassword == password{
-		return c.Render(http.StatusOK, "reg.html", map[string]interface{}{
-			"Title": "Registration",
-			"Error": "Login or password already exist",
-		})
-	}
-	if getRegEmail == email{
-		return c.Render(http.StatusOK, "reg.html", map[string]interface{}{
-			"Title": "Registration",
-			"Error": "You already have an account!",
-		})
-	}		
-	stringUUID := newUUID.String()
-	WriteDataSQL(stringUUID, getRegLogin, getRegPassword, getRegEmail)
-	return c.Redirect(http.StatusFound, "/users/"+stringUUID+"/notes")
-}
-
-// @Summary Authorization posting data
-// @Description Отправка данных пользователя в базу данных на странице авторизации
-// @Router /public/auth/post [post]
-// @Success 200
-func Authorization(c echo.Context) error{
-	conn, err := ConnectingSQL()
-	if err != nil{
-		logger.Err(err).Msg("Can't connect to database\n")
-	}
-	defer conn.Close(ctx)
-
-	getAuthLogin := c.FormValue("auth_login")
-	getAuthPassword := c.FormValue("auth_password")
-	
-	var login, password string
-	err = conn.QueryRow(ctx, os.Getenv("AUTH_QUERY"), getAuthLogin).Scan(&login, &password)
-	if err != nil{
-		logger.Err(err).Msg("Error in querying data in authorization\n")
-	}
-	userID := GetUserID()
-
-	logger.Info().Msg("UserID: "+userID)
-
-	if err == pgx.ErrNoRows{
-		return c.Render(http.StatusOK, "auth.html", map[string]interface{}{
-			"Title": "Authorization",
-			"Error": "No such user!",
-		})
-	}
-	if password == getAuthPassword && login == getAuthLogin{
-		c.Redirect(http.StatusFound, "/users/"+userID+"/notes")
-	} else {
-		c.Render(http.StatusOK, "auth.html", map[string]interface{}{
-			"Title": "Authorization",
-			"Error": "Wrong login or password",
-		})
-	}
-	return c.Redirect(http.StatusOK, "/public/reg")
-}
 // пофиксить баг где id берется не правильно, по почте, почему то из базы даннных берет самого ластового чела после его регистрации
 func GetUserID() string{
 	conn, err := ConnectingSQL()
@@ -159,13 +81,13 @@ func GetUserID() string{
 	return userID
 }
 
-func GetNotes() []Note{
+func GetNotes() []mod.Note{
 	conn, err := ConnectingSQL()
 	if err != nil {
 		logger.Err(err).Msg("Error in getting notes\n")
 	}
 
-	usersData := []Note{} 
+	usersData := []mod.Note{} 
 	rows, err := conn.Query(ctx, os.Getenv("GET_NOTES"))
 	if err != nil{
 		logger.Err(err).Msg("Error in querying with rows\n")
@@ -173,7 +95,7 @@ func GetNotes() []Note{
 	defer rows.Close()
 
 	for rows.Next(){
-		note := Note{}
+		note := mod.Note{}
 	
 		if err := rows.Scan(&note.NotesData, &note.CreatedAt); err!= nil{
 			logger.Err(err).Msg("Error in scaning data with rows\n")
@@ -192,8 +114,10 @@ func GetNoteID() (string, uuid.UUID){
 	}
 	defer conn.Close(ctx)
 	
-	var (noteID string
-		noteUUID uuid.UUID)
+	var (
+		noteID string
+		noteUUID uuid.UUID
+	)
 		
 	if err := conn.QueryRow(ctx, os.Getenv("GET_NOTE_ID_UUID")).Scan(&noteID, &noteUUID);err != nil{
 		logger.Err(err).Msg("Error in querying the row in getting note id/uuid\n")
@@ -207,7 +131,7 @@ func GetNoteID() (string, uuid.UUID){
 func ShowNotes(c echo.Context) error{
 	info := GetNotes()
 	userID := GetUserID()
-	user := User{}
+	user := mod.User{}
 	user.ID = userID
 	_, UUID := GetNoteID()
 
