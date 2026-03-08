@@ -1,20 +1,21 @@
 package handlers
 
 import (
-	_"fmt"
+	_ "fmt"
 	"html/template"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/swaggo/http-swagger"
 
+	_ "notebook/docs"
 	"notebook/internal/auth"
 	db "notebook/internal/database"
-	h "notebook/web/handlers"
 	l "notebook/internal/logger"
-	_"notebook/docs"
+	h "notebook/web/handlers"
 )
 
 var logger = l.NewLogger()
@@ -50,13 +51,9 @@ func Handlers(){
 	public.GET("/auth", h.AuthPage)
 	public.GET("/reg", h.RegPage)
 	public.POST("/reg/post", auth.Registration)
-	
-// TODO: сделать users/user{uuid}, где uuid получается из базы данных
-	
-	// route := fmt.Sprintf("/notes/:%v", db.GetNoteID)
 
 	users := e.Group("/users/:user_id")
-	users.DELETE("/notes/:note_id/delete", db.DeleteNotes)
+	users.POST("/notes/delete", db.DeleteNotes)
 	users.GET("/about", h.AboutPage)
 	users.GET("/notes", db.ShowNotes)
 	users.POST("/notes/post", db.WriteNotes)
@@ -70,5 +67,5 @@ func Handlers(){
 
 	e.Renderer = &Template{templates: tmpl}
 	e.Static("/web/css", "web/css")
-	e.Logger.Fatal(e.Start(":9080"))
+	e.Logger.Fatal(e.Start(os.Getenv("SERVER_PORT")))
 }

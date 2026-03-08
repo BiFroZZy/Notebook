@@ -11,6 +11,13 @@ import (
 	mod "notebook/internal/models"
 	db "notebook/internal/database"
 )
+func HashingFunc(password string) (hashedPass []byte){
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil{
+		logger.Err(err).Msg("Error while hashing the password!")
+	}
+	return hashedPass
+}
 // @Summary Registration posting data 
 // @Description Отправка данных пользователя в базу данных на странице регистрации
 // @Router /public/reg/post [post]
@@ -31,7 +38,7 @@ func Registration(c echo.Context) error {
 	if err != nil{
 		logger.Err(err).Msg("Can't get user's info in registration\n")
 	}
-	HashPassword := db.HashingFunc(getRegPassword)
+	HashPassword := HashingFunc(getRegPassword)
 	ok := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(getRegPassword))
 	if getRegLogin == user.Login && ok == nil{
 		return c.Render(http.StatusOK, "reg.html", map[string]interface{}{

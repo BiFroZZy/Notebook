@@ -17,6 +17,11 @@ var (
 	ctx = context.Background()
 	logger = l.NewLogger()
 )
+
+func GenerateJWT(){
+	
+}
+
 // @Summary Authorization posting data
 // @Description Отправка данных пользователя в базу данных на странице авторизации
 // @Router /public/auth/post [post]

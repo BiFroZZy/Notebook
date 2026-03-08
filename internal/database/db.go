@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 
 	l "notebook/internal/logger"
 	mod "notebook/internal/models"
@@ -20,14 +19,6 @@ var (
 	validate *validator.Validate
 	logger = l.NewLogger()
 ) 
-
-func HashingFunc(password string) (hashedPass []byte){
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil{
-		logger.Err(err).Msg("Error while hashing the password!")
-	}
-	return hashedPass
-}
 
 func ConnectingSQL() (*pgx.Conn, error) {
 	conn, err := pgx.Connect(ctx, os.Getenv("PGX_URL"))
@@ -60,7 +51,7 @@ func GetUserID() string{
 	if err != nil{
 		logger.Err(err).Msg("Can't get an ID\n")
 	}
-	var userID, email string
+	user := mod.User{}
 	rows, err := conn.Query(ctx, os.Getenv("GET_USER_ID_EMAIL"))
 	if err != nil{
 		logger.Err(err).Msg("Error in querying userID\n")
@@ -68,17 +59,17 @@ func GetUserID() string{
 	defer rows.Close()
 
 	for rows.Next(){
-		err = rows.Scan(&email)
+		err = rows.Scan(&user.Email)
 		if err != nil{
 			logger.Err(err).Msg("Error in querying with rows\n")
 		}
 	}
 	// надо сделать какой нить ID для того чтобы отсканить почеловечески с WHERE в БД для точности
-	err = conn.QueryRow(ctx, os.Getenv("GET_USER_ID_QUERY"), email).Scan(&userID)
+	err = conn.QueryRow(ctx, os.Getenv("GET_USER_ID_QUERY"), user.Email).Scan(&user.ID)
 	if err != nil{
 		logger.Err(err).Msg("Error in querying the row in getting user's ID\n")
 	}
-	return userID
+	return user.ID
 }
 
 func GetNotes() []mod.Note{
@@ -118,8 +109,8 @@ func GetNoteID() (string, uuid.UUID){
 		noteID string
 		noteUUID uuid.UUID
 	)
-		
-	if err := conn.QueryRow(ctx, os.Getenv("GET_NOTE_ID_UUID")).Scan(&noteID, &noteUUID);err != nil{
+	//note := mod.Note{}
+	if err := conn.QueryRow(ctx, os.Getenv("GET_NOTE_ID_UUID")).Scan(&noteID, &noteUUID); err != nil{
 		logger.Err(err).Msg("Error in querying the row in getting note id/uuid\n")
 	}
 	return noteID, noteUUID
@@ -143,7 +134,6 @@ func ShowNotes(c echo.Context) error{
 	})
 }
 
-// надо через c.Set() в отдельной функции сделать так чтобы получать id из базы данных и вставлять в ссылку users/:id  
 // Создать в базе данных ID для заметок - для /users/main/:id - чтобы удалить заметку с этой же id
 func DeleteNotes(c echo.Context) error {
 	conn, err := ConnectingSQL()
@@ -153,17 +143,18 @@ func DeleteNotes(c echo.Context) error {
 	defer conn.Close(ctx)
 
 	_, noteUUID := GetNoteID()
-	strUUID := noteUUID.String()
 	_, err = conn.Exec(ctx, os.Getenv("DELETE_NOTES"), noteUUID)
 	if err != nil{
 		logger.Err(err).Msg("Can't delete the note\n")
 	}
-	return c.Redirect(http.StatusOK, "/users/"+GetUserID()+"/notes/"+strUUID+"/delete")
+	ShowNotes(c)
+	return ShowNotes(c)
 }
-
+// добавить в добалвение в базу id пользователя в колонку user_id (она уже есть в базе, не добавлять!)
 func WriteNotes(c echo.Context) error {
 	notes := c.FormValue("write_notes")
 	notesUUID := uuid.New()
+	// userID := GetUserID()
 	strUUID := notesUUID.String()
 
 	if notes != ""{
