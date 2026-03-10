@@ -65,7 +65,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/about": {
+        "/users/:id/about": {
             "get": {
                 "description": "Основная информация о проекте",
                 "produces": [
@@ -79,7 +79,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/notes": {
+        "/users/:id/notes": {
             "get": {
                 "description": "Заметки пользователя",
                 "summary": "User's notes here",

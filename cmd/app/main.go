@@ -9,10 +9,6 @@ import (
 	l"notebook/internal/logger"
 )
 
-// var (
-// 	validate *validator.Validate
-// )
-
 // @Title Notebook documentaion (Документация по программе)
 // @Description Записки для пользователей
 // @version 1.0
@@ -20,7 +16,6 @@ import (
 // @BasePath
 func main() {
 	logger := l.NewLogger()
-	//validate := validator.New()
 	if err := godotenv.Load(); err != nil {
 		logger.Fatal().Msg("Can't load env file\n")
 	}

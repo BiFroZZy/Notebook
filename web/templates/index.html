@@ -2,18 +2,16 @@
 {{ template "header.html" }}
 
 <link rel="stylesheet" href="/web/css/styles.css">
-
 <head>
     <meta charset='utf-8'>
-    <title>Notebook {{ .Title }}</title>
+    <title>Notebook | {{ .Title }}</title>
 </head>
-
 <!doctype html>
 <html lang='en'>
-    <head>
-        <meta charset='utf-8'>
-        <title>Notebook</title>
-    </head>
+<!-- <head>
+    <meta charset='utf-8'>
+    <title>Notebook {{ .Title }}</title>
+</head> -->
     <body>
         <nav class="navigation">
             <a href="/public/auth">Авторизация</a>
@@ -29,9 +27,9 @@
             {{ end }}
                 <div class="main_notes">
                     <form action="/users/{{.UserID}}/notes/post" method="post">
-                        <label for="write_notes">Введите текст для заметок: </label>
+                        <label for="write_notes" class="label_notes">Введите ваши заметки: </label>
                         <input type="text" id="write_notes" name="write_notes" required>
-                        <button>Enter</button>
+                        <button class="button_enter">Enter</button>
                     </form>
                     {{ if .Notes }}
                         <ul class="user_notes">
@@ -46,7 +44,7 @@
                             {{ end }}
                         </ul>
                     {{ else }}
-                        <p>Пока нет заметок</p>
+                        <p class="notes_empty">Пока нет заметок...</p>
                     {{ end }}
                 </div>
         </main>
@@ -61,8 +59,25 @@
         min-height: 100vh;
         font-family: 'Segoe UI', system-ui, sans-serif;
     }
+    .notes_empty{
+        background-color: #5bd682;
+        border-radius: 15px;
+        padding: 20px;
+        color: white;
+        font-size: 30px;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+    }
     .delete_notes{
         text-align: right;
+    }
+    .button_enter{
+        background-color: #7b5bd6;
+        color: white;
+        border-radius: 15px;
+        border-color: blueviolet;
+        font-size: 17px;
+        padding: 5px;
+        font-family: Verdana, Geneva, Tahoma, sans-serif ;
     }
     .del_button{
         background-color: rgb(234, 54, 54);
@@ -142,5 +157,5 @@
         padding: 20px;
     }
 </style>
-{{ template "footer.html" }}
+
 {{ end }}

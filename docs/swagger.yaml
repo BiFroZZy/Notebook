@@ -37,7 +37,7 @@ paths:
         "200":
           description: OK
       summary: Registration posting data
-  /users/about:
+  /users/:id/about:
     get:
       description: Основная информация о проекте
       produces:
@@ -46,7 +46,7 @@ paths:
         "200":
           description: OK
       summary: About
-  /users/notes:
+  /users/:id/notes:
     get:
       description: Заметки пользователя
       responses: {}

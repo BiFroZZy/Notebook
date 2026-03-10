@@ -6,9 +6,16 @@ import (
 	"github.com/google/uuid"
 )
 
+type JWT struct{
+	UserID string		`validate:"required"`
+	Exp int64			`validate:"required"`
+	Iat int64			`validate:"required"`
+	Iss string 			`validate:"required"`
+}
+
 type Note struct{
 	ID string 			`validate:"required,uuid"`
-	NoteUUID uuid.UUID 		`validate:"required,uuid"`
+	NoteUUID uuid.UUID 	`validate:"required,uuid"`
 	NotesData string 	`validate:"min=1,max=1000"`
 	CreatedAt time.Time `validate:"required"`
 	UserID string 		`validate:"uuid"`

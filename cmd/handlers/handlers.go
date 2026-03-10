@@ -31,7 +31,7 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 
 func Handlers(){
 	e := echo.New()
-
+	
 	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
@@ -46,17 +46,21 @@ func Handlers(){
 		return c.Render(http.StatusOK, "auth.html", nil)
 	})
 
-	public := e.Group("/public")	
-	public.POST("/auth/post", auth.Authorization)
-	public.GET("/auth", h.AuthPage)
-	public.GET("/reg", h.RegPage)
-	public.POST("/reg/post", auth.Registration)
-
+	public := e.Group("/public")
+	{	
+		public.POST("/auth/post", auth.Authorization)
+		public.GET("/auth", h.AuthPage)
+		public.GET("/reg", h.RegPage)
+		public.POST("/reg/post", auth.Registration)
+	}
 	users := e.Group("/users/:user_id")
-	users.POST("/notes/delete", db.DeleteNotes)
-	users.GET("/about", h.AboutPage)
-	users.GET("/notes", db.ShowNotes)
-	users.POST("/notes/post", db.WriteNotes)
+	users.Use(auth.AuthMiddleware)
+	{
+		users.GET("/about", h.AboutPage)
+		users.GET("/notes", db.ShowNotes)
+		users.POST("/notes/delete", db.DeleteNotes)
+		users.POST("/notes/post", db.WriteNotes)
+	}
 
 	tmpl, err := template.ParseGlob(
 		"web/templates/*.html", 
@@ -66,6 +70,5 @@ func Handlers(){
 	}
 
 	e.Renderer = &Template{templates: tmpl}
-	e.Static("/web/css", "web/css")
 	e.Logger.Fatal(e.Start(os.Getenv("SERVER_PORT")))
 }

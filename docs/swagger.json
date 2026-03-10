@@ -58,7 +58,7 @@
                 }
             }
         },
-        "/users/about": {
+        "/users/:id/about": {
             "get": {
                 "description": "Основная информация о проекте",
                 "produces": [
@@ -72,7 +72,7 @@
                 }
             }
         },
-        "/users/notes": {
+        "/users/:id/notes": {
             "get": {
                 "description": "Заметки пользователя",
                 "summary": "User's notes here",

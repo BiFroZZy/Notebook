@@ -12,6 +12,7 @@ import (
 
 	l "notebook/internal/logger"
 	mod "notebook/internal/models"
+	_"notebook/internal/jwt"
 )
 
 var (
@@ -109,16 +110,20 @@ func GetNoteID() (string, uuid.UUID){
 		noteID string
 		noteUUID uuid.UUID
 	)
-	//note := mod.Note{}
-	if err := conn.QueryRow(ctx, os.Getenv("GET_NOTE_ID_UUID")).Scan(&noteID, &noteUUID); err != nil{
-		logger.Err(err).Msg("Error in querying the row in getting note id/uuid\n")
+
+	noteInfo := GetNotes()
+	for _, n := range noteInfo{
+		if err := conn.QueryRow(ctx, os.Getenv("GET_NOTE_ID_UUID"), n.NotesData).Scan(&noteID, &noteUUID); err != nil{
+			logger.Err(err).Msg("Error in querying the row in getting note id/uuid\n")
+		}
 	}
+	
 	return noteID, noteUUID
 }
 
 // @Summary User's notes here
 // @Description Заметки пользователя
-// @Router /users/notes [get]
+// @Router /users/:id/notes [get]
 func ShowNotes(c echo.Context) error{
 	info := GetNotes()
 	userID := GetUserID()
@@ -134,7 +139,6 @@ func ShowNotes(c echo.Context) error{
 	})
 }
 
-// Создать в базе данных ID для заметок - для /users/main/:id - чтобы удалить заметку с этой же id
 func DeleteNotes(c echo.Context) error {
 	conn, err := ConnectingSQL()
 	if err != nil{
@@ -147,10 +151,9 @@ func DeleteNotes(c echo.Context) error {
 	if err != nil{
 		logger.Err(err).Msg("Can't delete the note\n")
 	}
-	ShowNotes(c)
 	return ShowNotes(c)
 }
-// добавить в добалвение в базу id пользователя в колонку user_id (она уже есть в базе, не добавлять!)
+
 func WriteNotes(c echo.Context) error {
 	notes := c.FormValue("write_notes")
 	notesUUID := uuid.New()
