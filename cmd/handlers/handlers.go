@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	_ "fmt"
 	"html/template"
 	"io"
 	"net/http"
@@ -11,11 +10,12 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/swaggo/http-swagger"
 
-	_ "notebook/docs"
 	"notebook/internal/auth"
 	db "notebook/internal/database"
 	l "notebook/internal/logger"
 	h "notebook/web/handlers"
+	_ "notebook/docs"
+	
 )
 
 var logger = l.NewLogger()

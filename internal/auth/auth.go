@@ -25,7 +25,6 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		cookie, err := c.Cookie("token")
 		if err != nil{
 			logger.Err(err).Msg("Error occrued while gettting cookie\n")
-			// return c.Redirect(http.StatusUnauthorized, "/public/auth")
 			return c.Render(http.StatusOK, "auth.html", map[string]interface{}{
 				"Title": "Authorization",
 				"Error": "Your session is over, authorize again to continue",
@@ -36,7 +35,6 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			logger.Err(err).Msg("Error in parsing cookie value!\n")
 			return c.Redirect(http.StatusUnauthorized, "/public/auth")
 		}
-		logger.Info().Msg("Cookie value (JWT): " + cookie.Value)
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
 			c.Set("user_id", claims["user_id"])
 		}
@@ -70,10 +68,11 @@ func Authorization(c echo.Context) error{
 		SameSite: http.SameSiteLaxMode,
 		Secure: false,
 		Path: "/",
-		MaxAge: 10,
+		MaxAge: 600,
 	})
 
 	user := mod.User{}
+
 	err = conn.QueryRow(ctx, os.Getenv("AUTH_QUERY"), getAuthLogin).Scan(&user.Login, &user.Password)
 	if err != nil{
 		logger.Err(err).Msg("Error in querying data in authorization")

@@ -1,12 +1,11 @@
 package main
 
 import (
-	//"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 
 	"notebook/cmd/handlers"
-	_ "notebook/docs"
 	l"notebook/internal/logger"
+	_ "notebook/docs"
 )
 
 // @Title Notebook documentaion (Документация по программе)

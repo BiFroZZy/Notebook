@@ -20,10 +20,11 @@ var (
 func GenerateJWT(userID string) (string, error) {
 	tokenData := mod.JWT{
 		UserID: userID,
-		Exp: time.Now().Add(time.Second*300).Unix(),
+		Exp: time.Now().Add(time.Second*600).Unix(),
 		Iat: time.Now().Unix(),
 		Iss: "Vladimir Putin",
 	}
+	mod.CallValidation(logger, tokenData)
 	claims := jwt.MapClaims{
 		"sub": tokenData.UserID,
 		"exp": tokenData.Exp,

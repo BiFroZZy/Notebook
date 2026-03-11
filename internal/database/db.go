@@ -53,6 +53,7 @@ func GetUserID() string{
 		logger.Err(err).Msg("Can't get an ID\n")
 	}
 	user := mod.User{}
+
 	rows, err := conn.Query(ctx, os.Getenv("GET_USER_ID_EMAIL"))
 	if err != nil{
 		logger.Err(err).Msg("Error in querying userID\n")
@@ -80,6 +81,7 @@ func GetNotes() []mod.Note{
 	}
 
 	usersData := []mod.Note{} 
+
 	rows, err := conn.Query(ctx, os.Getenv("GET_NOTES"))
 	if err != nil{
 		logger.Err(err).Msg("Error in querying with rows\n")
@@ -88,7 +90,7 @@ func GetNotes() []mod.Note{
 
 	for rows.Next(){
 		note := mod.Note{}
-	
+
 		if err := rows.Scan(&note.NotesData, &note.CreatedAt); err!= nil{
 			logger.Err(err).Msg("Error in scaning data with rows\n")
 		}
@@ -105,19 +107,16 @@ func GetNoteID() (string, uuid.UUID){
 		logger.Err(err).Msg("Error in getting ID\n")
 	}
 	defer conn.Close(ctx)
-	
 	var (
 		noteID string
 		noteUUID uuid.UUID
 	)
-
 	noteInfo := GetNotes()
 	for _, n := range noteInfo{
 		if err := conn.QueryRow(ctx, os.Getenv("GET_NOTE_ID_UUID"), n.NotesData).Scan(&noteID, &noteUUID); err != nil{
 			logger.Err(err).Msg("Error in querying the row in getting note id/uuid\n")
 		}
 	}
-	
 	return noteID, noteUUID
 }
 
@@ -128,6 +127,7 @@ func ShowNotes(c echo.Context) error{
 	info := GetNotes()
 	userID := GetUserID()
 	user := mod.User{}
+
 	user.ID = userID
 	_, UUID := GetNoteID()
 
@@ -157,9 +157,7 @@ func DeleteNotes(c echo.Context) error {
 func WriteNotes(c echo.Context) error {
 	notes := c.FormValue("write_notes")
 	notesUUID := uuid.New()
-	// userID := GetUserID()
-	strUUID := notesUUID.String()
-
+	userID := GetUserID()
 	if notes != ""{
 		conn, err := ConnectingSQL()
 		if err != nil{
@@ -167,7 +165,7 @@ func WriteNotes(c echo.Context) error {
 		}
 		defer conn.Close(ctx)
 
-		_, err = conn.Exec(ctx, os.Getenv("WRITE_NOTES"), strUUID, notes)
+		_, err = conn.Exec(ctx, os.Getenv("WRITE_NOTES"), notesUUID, notes, userID)
 		if err != nil{
 			logger.Err(err).Msg("Can't insert user's notes in DB\n")
 		}
