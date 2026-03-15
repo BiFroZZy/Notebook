@@ -32,9 +32,10 @@ func Registration(c echo.Context) error {
 	if err != nil {
 		logger.Err(err).Msg("Can't connect to database\n")
 	}
+	defer conn.Close(ctx)
 	
 	user := mod.User{}
-	err = conn.QueryRow(ctx, os.Getenv("REG_QUERY"), getRegLogin, getRegPassword).Scan(&user.Login, &user.Password, &user.Email)
+	err = conn.QueryRow(ctx, os.Getenv("REG_QUERY"), getRegLogin).Scan(&user.Login, &user.Password, &user.Email)
 	if err != nil{
 		logger.Err(err).Msg("Can't get user's info in registration\n")
 	}

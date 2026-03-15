@@ -29,10 +29,13 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 	return t.templates.ExecuteTemplate(w, name, data) 
 }
 
+
+
 func Handlers(){
 	e := echo.New()
 	
-	e.Use(middleware.RequestLogger())
+	e.Use(l.LoggerMiddleawre())
+
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 	e.Use(middleware.Secure())
@@ -60,6 +63,7 @@ func Handlers(){
 		users.GET("/notes", db.ShowNotes)
 		users.POST("/notes/delete", db.DeleteNotes)
 		users.POST("/notes/post", db.WriteNotes)
+		users.GET("/userinfo", h.UserInfoPage)
 	}
 
 	tmpl, err := template.ParseGlob(

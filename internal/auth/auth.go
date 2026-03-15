@@ -55,12 +55,12 @@ func Authorization(c echo.Context) error{
 
 	getAuthLogin := c.FormValue("auth_login")
 	getAuthPassword := c.FormValue("auth_password")
-	
-	token, err := j.GenerateJWT(db.GetUserID())
+
+	userID := db.GetUserID(c)
+	token, err := j.GenerateJWT(userID)
 	if err != nil{
 		logger.Err(err).Msg("Error occrured while creating JWT")
 	}
-	// устанавливаю значение токена в куки, храня его в контексте
 	c.SetCookie(&http.Cookie{
 		Name: "token",
 		Value: token,
@@ -70,25 +70,23 @@ func Authorization(c echo.Context) error{
 		Path: "/",
 		MaxAge: 600,
 	})
-
 	user := mod.User{}
 
 	err = conn.QueryRow(ctx, os.Getenv("AUTH_QUERY"), getAuthLogin).Scan(&user.Login, &user.Password)
 	if err != nil{
-		logger.Err(err).Msg("Error in querying data in authorization")
-	}
-	userID := db.GetUserID()
-
-	if err == pgx.ErrNoRows{
+		if err == pgx.ErrNoRows{
 		return c.Render(http.StatusOK, "auth.html", map[string]interface{}{
 			"Title": "Authorization",
 			"Error": "No such user!",
 		})
+	}else{
+			logger.Err(err).Msg("Error in querying data in authorization")
+		}
 	}
 	ok := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(getAuthPassword))
 
 	if ok == nil && user.Login == getAuthLogin{
-		c.Redirect(http.StatusSeeOther, "/users/"+userID+"/notes")
+		c.Redirect(http.StatusSeeOther, "/users/"+userID.String()+"/notes")
 	} 
 
 	return c.Render(http.StatusOK, "auth.html", map[string]interface{}{

@@ -1,8 +1,6 @@
 {{ define "about.html" }}
 {{ template "header.html"}}
 
-<link rel="stylesheet" href="/web/css/styles.css">
-
 <head>
     <meta charset='utf-8'>
     <title>Notebook | {{ .Title }}</title>
@@ -14,8 +12,9 @@
                 <a href="/public/auth">Авторизация</a>
                 <a href="/users/{{.UserID}}/notes">Домашняя страница</a>
                 <a href="/users/{{.UserID}}/about">Информация</a>
+                <a href="/users/{{.UserID}}/userinfo">О пользователе</a>
             </nav>
-        </div>
+    </div>
     <div class="about_main">
         
         <div class="about-text">
@@ -25,14 +24,14 @@
 </html>
 
 <style>
-    body {
-        background-color: #f3e9ff !important;
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-    }
-    .about_main {
+body {
+    background-color: #f3e9ff !important;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+.about_main {
     background: white;
     border-radius: 12px;
     padding: 40px;

@@ -5,7 +5,7 @@ import (
 
 	"notebook/cmd/handlers"
 	l"notebook/internal/logger"
-	_ "notebook/docs"
+	_"notebook/docs"
 )
 
 // @Title Notebook documentaion (Документация по программе)
@@ -16,7 +16,7 @@ import (
 func main() {
 	logger := l.NewLogger()
 	if err := godotenv.Load(); err != nil {
-		logger.Fatal().Msg("Can't load env file\n")
+		logger.Fatal().Msg("Can't load env file")
 	}
 	logger.Info().Msg("App is started!")
 	handlers.Handlers()

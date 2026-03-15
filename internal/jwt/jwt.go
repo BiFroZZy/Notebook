@@ -6,6 +6,7 @@ import(
 	"os"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 
 	l"notebook/internal/logger"
 	mod "notebook/internal/models"
@@ -17,9 +18,9 @@ var (
 	secretKey = []byte(os.Getenv("SECRET_JWT"))
 )
 
-func GenerateJWT(userID string) (string, error) {
+func GenerateJWT(userID uuid.UUID) (string, error) {
 	tokenData := mod.JWT{
-		UserID: userID,
+		UserID: userID.String(),
 		Exp: time.Now().Add(time.Second*600).Unix(),
 		Iat: time.Now().Unix(),
 		Iss: "Vladimir Putin",

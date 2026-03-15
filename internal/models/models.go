@@ -20,16 +20,17 @@ type Note struct{
 	NoteUUID uuid.UUID 	`validate:"required,uuid"`
 	NotesData string 	`validate:"min=1,max=1000"`
 	CreatedAt time.Time `validate:"required"`
-	UserID string 		`validate:"uuid"`
-	NoteID string 		`validate:"uuid"`
+	UserID uuid.UUID 	`validate:"uuid"`
+	NoteID uuid.UUID 	`validate:"uuid"`
 }
 
 type User struct{
-	ID string			`validate:"required,uuid"`
+	ID uuid.UUID		`validate:"required,uuid"`
 	Name string 		`validate:"required,min=2,max=40"`
 	Login string 		`validate:"required,min=4,max=12"`
 	Password string 	`validate:"required,min=4,max=12"`
 	Email string 		`validate:"required,email"`
+	CreatedAt time.Time `validate:"required"`
 }
 
 type ValidationStruct struct{

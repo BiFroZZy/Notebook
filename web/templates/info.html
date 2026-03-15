@@ -1,0 +1,113 @@
+{{ define "info.html" }}
+{{ template "header.html"}}
+
+<head>
+    <meta charset='utf-8'>
+    <title>Notebook | {{ .Title }}</title>
+</head>
+
+<!doctype html>
+<body>
+    <nav class="navigation">
+        <a href="/public/auth">Авторизация</a>
+        <a href="/users/{{.UserID}}/notes">Домашняя страница</a>
+        <a href="/users/{{.UserID}}/about">Информация</a>
+        <a href="/users/{{.UserID}}/userinfo">О пользователе</a>
+    </nav>
+
+    <div class="userinfo_table">
+        <div class="info_text">
+            <ul>
+                <li>Your account created at: {{.TimeInfo}};</li>
+                <li>Your email: {{ .EmailInfo }};</li>
+                <li class="session_time">Session time: <span id="sessionTimeValue">{{ .SessionTime }}</span>;</li>
+            </ul>
+        </div>
+    </div>
+
+    <input type="hidden" id="userId" value="{{ .UserID }}">
+
+<script>
+    (function() {
+        const userId = document.body.dataset.userId;
+        
+        if (!userId) {
+            console.error('User ID не найден');
+            return;
+        }
+
+        async function updateSessionTime() {
+            try {
+                const response = await fetch(`/users/${userId}/session-time`);
+                const data = await response.json();
+                document.getElementById('sessionTimeValue').textContent = data.sessionTime;
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+
+        setInterval(updateSessionTime, 1000);
+        updateSessionTime();
+    })();
+</script>
+    
+<style>
+body {
+    background-color: #f3e9ff !important;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+.userinfo_table{
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    width: 90%;
+    max-width: 800px;
+    margin: 40px auto;
+    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.15);
+}
+.info_text{
+    text-align: center;
+    font-size: large;
+}
+.info_text ul {
+    list-style: none;
+    padding: 0;
+}
+.info_text li {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f8f5ff;
+    border-radius: 8px;
+}
+.session_time {
+    color: #7b5bd6;
+    font-weight: bold;
+}
+.navigation{
+    background: white;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(138, 43, 226, 0.1);
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+}
+nav a {
+    color: #7b5bd6;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 16px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.3s;
+}
+nav a:hover {
+    background: #f8f5ff;
+    color: #5a3f9e;
+}
+</style>
+</body>
+</html>
+{{ end }}

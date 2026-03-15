@@ -1,7 +1,6 @@
 {{ define "index.html" }}
 {{ template "header.html" }}
 
-<link rel="stylesheet" href="/web/css/styles.css">
 <head>
     <meta charset='utf-8'>
     <title>Notebook | {{ .Title }}</title>
@@ -17,6 +16,7 @@
             <a href="/public/auth">Авторизация</a>
             <a href="/users/{{.UserID}}/notes">Домашняя страница</a>
             <a href="/users/{{.UserID}}/about">Информация</a>
+            <a href="/users/{{.UserID}}/userinfo">О пользователе</a>
         </nav>
         <main>
             <h2>Последние заметки</h2>
@@ -28,7 +28,7 @@
                 <div class="main_notes">
                     <form action="/users/{{.UserID}}/notes/post" method="post">
                         <label for="write_notes" class="label_notes">Введите ваши заметки: </label>
-                        <input type="text" id="write_notes" name="write_notes" required>
+                        <input type="text" id="write_notes" name="write_notes" required autocomplete="off">
                         <button class="button_enter">Enter</button>
                     </form>
                     {{ if .Notes }}

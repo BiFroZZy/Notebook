@@ -12,6 +12,7 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.6
+	github.com/ziflex/lecho/v3 v3.10.0
 	golang.org/x/crypto v0.48.0
 )
 
