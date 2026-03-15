@@ -51,4 +51,9 @@ paths:
       description: Заметки пользователя
       responses: {}
       summary: User's notes here
+  /users/:id/notes/delete:
+    post:
+      description: Удаление заметок пользователя
+      responses: {}
+      summary: Deleting user's notes here
 swagger: "2.0"

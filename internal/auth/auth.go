@@ -24,7 +24,6 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
     return func(c echo.Context) error {
 		cookie, err := c.Cookie("token")
 		if err != nil{
-			logger.Err(err).Msg("Error occrued while gettting cookie\n")
 			return c.Render(http.StatusOK, "auth.html", map[string]interface{}{
 				"Title": "Authorization",
 				"Error": "Your session is over, authorize again to continue",
@@ -68,7 +67,7 @@ func Authorization(c echo.Context) error{
 		SameSite: http.SameSiteLaxMode,
 		Secure: false,
 		Path: "/",
-		MaxAge: 600,
+		MaxAge: 1200,
 	})
 	user := mod.User{}
 

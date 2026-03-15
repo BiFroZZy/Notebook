@@ -21,7 +21,7 @@ var (
 func GenerateJWT(userID uuid.UUID) (string, error) {
 	tokenData := mod.JWT{
 		UserID: userID.String(),
-		Exp: time.Now().Add(time.Second*600).Unix(),
+		Exp: time.Now().Add(time.Second*1200).Unix(),
 		Iat: time.Now().Unix(),
 		Iss: "Vladimir Putin",
 	}

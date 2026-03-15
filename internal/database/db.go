@@ -5,19 +5,16 @@ import (
 	"net/http"
 	"os"
 	
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 
 	l "notebook/internal/logger"
 	mod "notebook/internal/models"
-	_"notebook/internal/jwt"
 )
 
 var (
 	ctx = context.Background()
-	validate *validator.Validate
 	logger = l.NewLogger()
 ) 
 
@@ -58,9 +55,7 @@ func GetUserID(c echo.Context) uuid.UUID{
 		logger.Err(err).Msg("Error in cookie show notes!")
 	}
 	getUserLogin := c.FormValue("auth_login")
-
 	err = conn.QueryRow(ctx, os.Getenv("GET_USER_ID"), getUserLogin).Scan(&user.ID)
-
 	if err != nil{
 		if err == pgx.ErrNoRows{
 			logger.Error().Msg("Rows are empty")
@@ -74,7 +69,7 @@ func GetUserID(c echo.Context) uuid.UUID{
 func GetNotes(c echo.Context) []mod.Note{
 	conn, err := ConnectingSQL()
 	if err != nil {
-		logger.Err(err).Msg("Error in getting notes")
+		logger.Err(err).Msg("Error occured while connecting to DB")
 	}
 	defer conn.Close(ctx)
 	usersData := []mod.Note{} 
@@ -82,39 +77,20 @@ func GetNotes(c echo.Context) []mod.Note{
 
 	rows, err := conn.Query(ctx, os.Getenv("GET_NOTES"), c.Param("user_id"))
 	if err != nil{
-		logger.Err(err).Msg("Error in querying with rows")
+		logger.Err(err).Msg("Error occured while querying with rows")
 	}
 	defer rows.Close()
 
 	for rows.Next(){
-		if err := rows.Scan(&note.NotesData, &note.CreatedAt); err!= nil{
-			logger.Err(err).Msg("Error in scaning data with rows")
-		}
-		if err == pgx.ErrNoRows{
-			logger.Info().Msg("Notes are emtpy!")
+		if err := rows.Scan(&note.NotesData, &note.CreatedAt, &note.UUID); err!= nil{
+			if err == pgx.ErrNoRows{
+				logger.Error().Msg("Notes are emtpy!")
+			}
+			logger.Err(err).Msg("Error occured while scaning data with rows")
 		}
 		usersData = append(usersData, note)
 	}
 	return usersData
-}
-// Возвращает ID заметки
-func GetNoteID(c echo.Context) (string, uuid.UUID){
-	conn, err := ConnectingSQL()
-	if err != nil{
-		logger.Err(err).Msg("Error in getting ID")
-	}
-	defer conn.Close(ctx)
-	var (
-		noteID string
-		noteUUID uuid.UUID
-	)
-	noteInfo := GetNotes(c)
-	for _, n := range noteInfo{
-		if err := conn.QueryRow(ctx, os.Getenv("GET_NOTE_ID_UUID"), n.NotesData).Scan(&noteID, &noteUUID); err != nil{
-			logger.Err(err).Msg("Error in querying the row in getting note id/uuid")
-		}
-	}
-	return noteID, noteUUID
 }
 
 // @Summary User's notes here
@@ -123,40 +99,34 @@ func GetNoteID(c echo.Context) (string, uuid.UUID){
 func ShowNotes(c echo.Context) error{
 	info := GetNotes(c)
 	userID := c.Param("user_id") // НЕ УДАЛЯТЬ!!!!!!
-	// if userID == ""{
-	// 	userID := GetUserID(c)
-	// 	return c.Redirect(http.StatusSeeOther, "/users/"+userID.String()+"/notes")
-	// }
-	logger.Info().Msg(userID)
-	_, UUID := GetNoteID(c)
+	if userID == "" || userID == "00000000-0000-0000-0000-000000000000" {
+        userID = c.FormValue("user_id")
+    }
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
 		"Title": "Notes", 
 		"Notes": info,
 		"UserID": userID,
-		"NoteID": UUID,
 	})
 }
-// Удаление заметок из БДшки
+
+// @Summary Deleting user's notes here
+// @Description Удаление заметок пользователя
+// @Router /users/:id/notes/delete [post]
 func DeleteNotes(c echo.Context) error {
 	conn, err := ConnectingSQL()
 	if err != nil{
 		logger.Err(err).Msg("Can't connect to database")
 	}
 	defer conn.Close(ctx)
-	
-	// userID := c.Param("user_id")
-	// из за того что UserID в index.html delete передается в виде структуры Notes - она пустая, но я хз
-	logger.Debug().Msg("1."+ c.Request().Method)
-	logger.Debug().Msg("2."+c.Request().URL.String())
-	logger.Debug().Msg("3."+c.Path())
-	logger.Debug().Msg("4."+c.Param("user_id"))
 
-	_, noteUUID := GetNoteID(c)
-	_, err = conn.Exec(ctx, os.Getenv("DELETE_NOTES"), noteUUID)
+	UUID := c.FormValue("note_id")
+	userID := c.Param("user_id")
+	
+	_, err = conn.Exec(ctx, os.Getenv("DELETE_NOTES"), UUID)
 	if err != nil{
 		logger.Err(err).Msg("Can't delete the note")
 	}
-	return ShowNotes(c)
+	return c.Redirect(http.StatusSeeOther, "/users/"+userID+"/notes")
 }
 // Запись заметок в БДшку
 func WriteNotes(c echo.Context) error {

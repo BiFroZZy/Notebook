@@ -26,7 +26,7 @@
                 </div>
             {{ end }}
                 <div class="main_notes">
-                    <form action="/users/{{.UserID}}/notes/post" method="post">
+                    <form action="/users/{{ .UserID }}/notes/post" method="post">
                         <label for="write_notes" class="label_notes">Введите ваши заметки: </label>
                         <input type="text" id="write_notes" name="write_notes" required autocomplete="off">
                         <button class="button_enter">Enter</button>
@@ -35,9 +35,11 @@
                         <ul class="user_notes">
                             {{ range .Notes }}
                                 <li>
-                                    <form action="/users/{{.UserID}}/notes/delete" class="delete_notes" method="post">
+                                    <form action="/users/{{ $.UserID }}/notes/delete" class="delete_notes" method="post">
                                         <div class="notesData">
-                                            {{ .NotesData }}<button class="del_button">Удалить</button>
+                                            {{ .NotesData }}; {{.CreatedAt}}<button class="del_button">Удалить</button>
+                                            <input type="hidden" name="user_id" value="{{ $.UserID }}">
+                                            <input type="hidden" name="note_id" value="{{ .UUID }}">
                                         </div>
                                     </form>
                                 </li>

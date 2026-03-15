@@ -63,7 +63,7 @@ func UserInfoPage(c echo.Context) error{
 		logger.Err(err).Msg("error")
 	}
 	sessionTime := mod.JWT{
-		Exp:  int64(time.Now().Add(time.Second*600).Minute()),
+		Exp:  int64(time.Now().Add(time.Second*1200).Second()),
 	}
 	timeInfo := user.CreatedAt
 	emailInfo := user.Email

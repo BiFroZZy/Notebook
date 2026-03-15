@@ -85,6 +85,13 @@ const docTemplate = `{
                 "summary": "User's notes here",
                 "responses": {}
             }
+        },
+        "/users/:id/notes/delete": {
+            "post": {
+                "description": "Удаление заметок пользователя",
+                "summary": "Deleting user's notes here",
+                "responses": {}
+            }
         }
     }
 }`
