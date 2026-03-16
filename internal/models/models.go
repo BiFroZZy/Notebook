@@ -19,7 +19,7 @@ type Note struct{
 	ID string 			`validate:"required,uuid"`
 	UUID uuid.UUID 		`validate:"required,uuid"`
 	NotesData string 	`validate:"min=1,max=1000"`
-	CreatedAt time.Time `validate:"required"`
+	CreatedAt string 	`validate:"required"`
 	UserID uuid.UUID 	`validate:"uuid"`
 }
 

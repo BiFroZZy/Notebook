@@ -4,7 +4,8 @@ import (
 	"context"
 	"net/http"
 	"os"
-	
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
@@ -74,6 +75,7 @@ func GetNotes(c echo.Context) []mod.Note{
 	defer conn.Close(ctx)
 	usersData := []mod.Note{} 
 	note := mod.Note{}
+	var t time.Time
 	
 	rows, err := conn.Query(ctx, os.Getenv("GET_NOTES"), c.Param("user_id"))
 	if err != nil{
@@ -82,12 +84,14 @@ func GetNotes(c echo.Context) []mod.Note{
 	defer rows.Close()
 
 	for rows.Next(){
-		if err := rows.Scan(&note.NotesData, &note.CreatedAt, &note.UUID); err!= nil{
+		err := rows.Scan(&note.NotesData, &t, &note.UUID)
+		if err!= nil{
 			if err == pgx.ErrNoRows{
 				logger.Error().Msg("Notes are emtpy!")
 			}
 			logger.Err(err).Msg("Error occured while scaning data with rows")
 		}
+		note.CreatedAt = t.Format("2006-01-02 15:04")
 		usersData = append(usersData, note)
 	}
 	return usersData

@@ -1,12 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Записки для пользователей",
-        "title": "Notebook documentaion (Документация по программе)",
-        "contact": {},
-        "version": "1.0"
+        "contact": {}
     },
-    "host": "localhost",
     "paths": {
         "/public/auth": {
             "get": {
