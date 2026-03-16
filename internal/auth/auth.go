@@ -31,7 +31,7 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 		token, err := j.ParseToken(cookie.Value)
 		if err != nil || !token.Valid {
-			logger.Err(err).Msg("Error in parsing cookie value!\n")
+			logger.Err(err).Msg("Error in parsing cookie value!")
 			return c.Redirect(http.StatusUnauthorized, "/public/auth")
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
@@ -67,7 +67,7 @@ func Authorization(c echo.Context) error{
 		SameSite: http.SameSiteLaxMode,
 		Secure: false,
 		Path: "/",
-		MaxAge: 1200,
+		MaxAge: 600,
 	})
 	user := mod.User{}
 

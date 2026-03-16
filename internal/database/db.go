@@ -74,7 +74,7 @@ func GetNotes(c echo.Context) []mod.Note{
 	defer conn.Close(ctx)
 	usersData := []mod.Note{} 
 	note := mod.Note{}
-
+	
 	rows, err := conn.Query(ctx, os.Getenv("GET_NOTES"), c.Param("user_id"))
 	if err != nil{
 		logger.Err(err).Msg("Error occured while querying with rows")

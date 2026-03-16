@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"context"
-	"time"
+	// "time"
 	"net/http"
 	"os"
 
@@ -62,16 +62,13 @@ func UserInfoPage(c echo.Context) error{
 	if err != nil{
 		logger.Err(err).Msg("error")
 	}
-	sessionTime := mod.JWT{
-		Exp:  int64(time.Now().Add(time.Second*1200).Second()),
-	}
 	timeInfo := user.CreatedAt
+	
 	emailInfo := user.Email
 	return c.Render(http.StatusOK, "info.html", map[string]interface{}{
 		"Title": "Info",
-		"TimeInfo": timeInfo,
+		"TimeInfo": timeInfo.Format("2006-01-02 15:04:05"),
 		"EmailInfo": emailInfo,
 		"UserID": userID,
-		"SessionTime": sessionTime,
 	})
 }	

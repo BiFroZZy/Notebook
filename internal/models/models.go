@@ -21,8 +21,6 @@ type Note struct{
 	NotesData string 	`validate:"min=1,max=1000"`
 	CreatedAt time.Time `validate:"required"`
 	UserID uuid.UUID 	`validate:"uuid"`
-	// User User			`validate:"required"`
-	// NoteID uuid.UUID 	`validate:"uuid"`
 }
 
 type User struct{
@@ -33,7 +31,6 @@ type User struct{
 	Email string 		`validate:"required,email"`
 	CreatedAt time.Time `validate:"required"`
 }
-
 
 type ValidationStruct struct{
 	*validator.Validate
