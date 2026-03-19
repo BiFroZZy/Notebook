@@ -44,27 +44,24 @@ func WriteDataSQL(id, login, password, email string){
 	}
 }	
 
-func GetUserID(c echo.Context) uuid.UUID{
+func GetUser(c echo.Context) (uuid.UUID, string, time.Time){
 	conn, err := ConnectingSQL()
 	if err != nil{
 		logger.Err(err).Msg("Can't get an ID")
 	}
 	defer conn.Close(ctx)
 	user := mod.User{}
-
-	if err != nil{
-		logger.Err(err).Msg("Error in cookie show notes!")
-	}
 	getUserLogin := c.FormValue("auth_login")
-	err = conn.QueryRow(ctx, os.Getenv("GET_USER_ID"), getUserLogin).Scan(&user.ID)
+
+	err = conn.QueryRow(ctx, os.Getenv("GET_USER"), getUserLogin).Scan(&user.ID, &user.Email, &user.CreatedAt)
 	if err != nil{
 		if err == pgx.ErrNoRows{
-			logger.Error().Msg("Rows are empty")
+			logger.Error().Msg("Nothing to get - rows are empty")
 		}else{
-			logger.Err(err).Msg("Error in querying the row in getting user's ID")
+			logger.Err(err).Msg("Error occured while querying the row")
 		}
 	}
-	return user.ID
+	return user.ID, user.Email, user.CreatedAt
 }
 
 func GetNotes(c echo.Context) []mod.Note{
@@ -100,15 +97,17 @@ func GetNotes(c echo.Context) []mod.Note{
 // @Summary User's notes here
 // @Description Заметки пользователя
 // @Router /users/:id/notes [get]
+// @Produce html
+// @Success 200
 func ShowNotes(c echo.Context) error{
-	info := GetNotes(c)
+	notes := GetNotes(c)
 	userID := c.Param("user_id") // НЕ УДАЛЯТЬ!!!!!!
 	if userID == "" || userID == "00000000-0000-0000-0000-000000000000" {
         userID = c.FormValue("user_id")
     }
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{
 		"Title": "Notes", 
-		"Notes": info,
+		"Notes": notes,
 		"UserID": userID,
 	})
 }
@@ -116,6 +115,7 @@ func ShowNotes(c echo.Context) error{
 // @Summary Deleting user's notes here
 // @Description Удаление заметок пользователя
 // @Router /users/:id/notes/delete [post]
+// @Redirection 303
 func DeleteNotes(c echo.Context) error {
 	conn, err := ConnectingSQL()
 	if err != nil{

@@ -12,7 +12,7 @@ type JWT struct{
 	UserID string		`validate:"required,uuid"`
 	Exp int64			`validate:"required"`
 	Iat int64			`validate:"required"`
-	Iss string 			`validate:"required"`
+	Iss string 			`validate:"required,min=2,max=50"`
 }
 
 type Note struct{

@@ -42,10 +42,23 @@ paths:
         "200":
           description: OK
       summary: About
+  /users/:id/info:
+    get:
+      description: Основная информация о проекте
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+      summary: Info
   /users/:id/notes:
     get:
       description: Заметки пользователя
-      responses: {}
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
       summary: User's notes here
   /users/:id/notes/delete:
     post:

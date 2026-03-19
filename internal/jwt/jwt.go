@@ -2,7 +2,6 @@ package jwt
 
 import(
 	"time"
-	"context"
 	"os"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,7 +12,6 @@ import(
 )
 
 var (
-	ctx = context.Background()
 	logger = l.NewLogger()
 	secretKey = []byte(os.Getenv("SECRET_JWT"))
 )

@@ -79,11 +79,32 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/:id/info": {
+            "get": {
+                "description": "Основная информация о проекте",
+                "produces": [
+                    "text/html"
+                ],
+                "summary": "Info",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/users/:id/notes": {
             "get": {
                 "description": "Заметки пользователя",
+                "produces": [
+                    "text/html"
+                ],
                 "summary": "User's notes here",
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
             }
         },
         "/users/:id/notes/delete": {

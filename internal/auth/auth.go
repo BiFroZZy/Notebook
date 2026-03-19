@@ -55,7 +55,7 @@ func Authorization(c echo.Context) error{
 	getAuthLogin := c.FormValue("auth_login")
 	getAuthPassword := c.FormValue("auth_password")
 
-	userID := db.GetUserID(c)
+	userID, _, _ := db.GetUser(c)
 	token, err := j.GenerateJWT(userID)
 	if err != nil{
 		logger.Err(err).Msg("Error occrured while creating JWT")

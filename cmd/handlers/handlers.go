@@ -29,8 +29,6 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 	return t.templates.ExecuteTemplate(w, name, data) 
 }
 
-
-
 func Handlers(){
 	e := echo.New()
 	
@@ -63,7 +61,7 @@ func Handlers(){
 		users.GET("/notes", db.ShowNotes)
 		users.POST("/notes/delete", db.DeleteNotes)
 		users.POST("/notes/post", db.WriteNotes)
-		users.GET("/userinfo", h.UserInfoPage)
+		users.GET("/info", h.UserInfoPage)
 	}
 
 	tmpl, err := template.ParseGlob(
