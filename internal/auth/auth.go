@@ -31,7 +31,7 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 		token, err := j.ParseToken(cookie.Value)
 		if err != nil || !token.Valid {
-			logger.Err(err).Msg("Error in parsing cookie value!")
+			logger.Error().Err(err).Msg("Error in parsing cookie value!")
 			return c.Redirect(http.StatusUnauthorized, "/public/auth")
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
@@ -48,17 +48,17 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 func Authorization(c echo.Context) error{
 	conn, err := db.ConnectingSQL()
 	if err != nil{
-		logger.Err(err).Msg("Can't connect to database")
+		logger.Error().Err(err).Msg("Can't connect to database")
 	}
 	defer conn.Close(ctx)
-
+	
 	getAuthLogin := c.FormValue("auth_login")
 	getAuthPassword := c.FormValue("auth_password")
 
-	userID, _, _ := db.GetUser(c)
+	userID, _, _ :=  db.GetUser(c)
 	token, err := j.GenerateJWT(userID)
 	if err != nil{
-		logger.Err(err).Msg("Error occrured while creating JWT")
+		logger.Error().Err(err).Msg("Error occrured while creating JWT")
 	}
 	c.SetCookie(&http.Cookie{
 		Name: "token",
@@ -70,7 +70,6 @@ func Authorization(c echo.Context) error{
 		MaxAge: 600,
 	})
 	user := mod.User{}
-
 	err = conn.QueryRow(ctx, os.Getenv("AUTH_QUERY"), getAuthLogin).Scan(&user.Login, &user.Password)
 	if err != nil{
 		if err == pgx.ErrNoRows{
@@ -79,7 +78,7 @@ func Authorization(c echo.Context) error{
 			"Error": "No such user!",
 		})
 	}else{
-			logger.Err(err).Msg("Error in querying data in authorization")
+			logger.Error().Err(err).Msg("Error in querying data in authorization")
 		}
 	}
 	ok := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(getAuthPassword))

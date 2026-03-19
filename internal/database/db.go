@@ -10,8 +10,10 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 
+	"notebook/internal/config"
 	l "notebook/internal/logger"
 	mod "notebook/internal/models"
+	// "notebook/internal/config"
 )
 
 var (
@@ -19,15 +21,18 @@ var (
 	logger = l.NewLogger()
 ) 
 
+type MyUser mod.User
+
 func ConnectingSQL() (*pgx.Conn, error) {
-	conn, err := pgx.Connect(ctx, os.Getenv("PGX_URL"))
+	cfg, _ := config.Load()
+	conn, err := pgx.Connect(ctx, cfg.PgxUrl)
 	if err != nil{
-		logger.Err(err).Msg("Can't connect to database")
+		logger.Error().Err(err).Msg("Can't connect to database")
 	} 
 	
 	_, err = conn.Exec(ctx, os.Getenv("CREATE_TABLE"))
 	if err != nil{
-		logger.Err(err).Msg("Can't create table")
+		logger.Error().Err(err).Msg("Can't create table")
 	}
 	return conn, err
 }
@@ -35,19 +40,19 @@ func ConnectingSQL() (*pgx.Conn, error) {
 func WriteDataSQL(id, login, password, email string){
 	conn, err := ConnectingSQL()
 	if err != nil {
-		logger.Err(err).Msg("Can't connect to database while writing data")
+		logger.Error().Err(err).Msg("Can't connect to database while writing data")
 	}
 	defer conn.Close(ctx)
 	_, err = conn.Exec(ctx, os.Getenv("WRITE_SQL_QUERY"), id, login, password, email)
 	if err != nil{
-		logger.Err(err).Msg("Can't insert data to database")
+		logger.Error().Err(err).Msg("Can't insert data to database")
 	}
 }	
 
 func GetUser(c echo.Context) (uuid.UUID, string, time.Time){
 	conn, err := ConnectingSQL()
 	if err != nil{
-		logger.Err(err).Msg("Can't get an ID")
+		logger.Error().Err(err).Msg("Can't get an ID")
 	}
 	defer conn.Close(ctx)
 	user := mod.User{}
@@ -56,9 +61,9 @@ func GetUser(c echo.Context) (uuid.UUID, string, time.Time){
 	err = conn.QueryRow(ctx, os.Getenv("GET_USER"), getUserLogin).Scan(&user.ID, &user.Email, &user.CreatedAt)
 	if err != nil{
 		if err == pgx.ErrNoRows{
-			logger.Error().Msg("Nothing to get - rows are empty")
+			logger.Error().Err(err).Msg("Nothing to get - rows are empty")
 		}else{
-			logger.Err(err).Msg("Error occured while querying the row")
+			logger.Error().Err(err).Msg("Error occured while querying the row")
 		}
 	}
 	return user.ID, user.Email, user.CreatedAt
@@ -67,7 +72,7 @@ func GetUser(c echo.Context) (uuid.UUID, string, time.Time){
 func GetNotes(c echo.Context) []mod.Note{
 	conn, err := ConnectingSQL()
 	if err != nil {
-		logger.Err(err).Msg("Error occured while connecting to DB")
+		logger.Error().Err(err).Msg("Error occured while connecting to DB")
 	}
 	defer conn.Close(ctx)
 	usersData := []mod.Note{} 
@@ -76,7 +81,7 @@ func GetNotes(c echo.Context) []mod.Note{
 	
 	rows, err := conn.Query(ctx, os.Getenv("GET_NOTES"), c.Param("user_id"))
 	if err != nil{
-		logger.Err(err).Msg("Error occured while querying with rows")
+		logger.Error().Err(err).Msg("Error occured while querying with rows")
 	}
 	defer rows.Close()
 
@@ -86,7 +91,7 @@ func GetNotes(c echo.Context) []mod.Note{
 			if err == pgx.ErrNoRows{
 				logger.Error().Msg("Notes are emtpy!")
 			}
-			logger.Err(err).Msg("Error occured while scaning data with rows")
+			logger.Error().Err(err).Msg("Error occured while scaning data with rows")
 		}
 		note.CreatedAt = t.Format("2006-01-02 15:04")
 		usersData = append(usersData, note)
@@ -119,7 +124,7 @@ func ShowNotes(c echo.Context) error{
 func DeleteNotes(c echo.Context) error {
 	conn, err := ConnectingSQL()
 	if err != nil{
-		logger.Err(err).Msg("Can't connect to database")
+		logger.Error().Err(err).Msg("Can't connect to database")
 	}
 	defer conn.Close(ctx)
 
@@ -128,7 +133,7 @@ func DeleteNotes(c echo.Context) error {
 	
 	_, err = conn.Exec(ctx, os.Getenv("DELETE_NOTES"), UUID)
 	if err != nil{
-		logger.Err(err).Msg("Can't delete the note")
+		logger.Error().Err(err).Msg("Can't delete the note")
 	}
 	return c.Redirect(http.StatusSeeOther, "/users/"+userID+"/notes")
 }
@@ -140,13 +145,13 @@ func WriteNotes(c echo.Context) error {
 	if notes != ""{
 		conn, err := ConnectingSQL()
 		if err != nil{
-			logger.Err(err).Msg("Can't connect to database")
+			logger.Error().Err(err).Msg("Can't connect to database")
 		}
 		defer conn.Close(ctx)
 
 		_, err = conn.Exec(ctx, os.Getenv("WRITE_NOTES"), notesUUID, notes, userID)
 		if err != nil{
-			logger.Err(err).Msg("Can't insert user's notes in DB")
+			logger.Error().Err(err).Msg("Can't insert user's notes in DB")
 		}
 		return ShowNotes(c)
 	}

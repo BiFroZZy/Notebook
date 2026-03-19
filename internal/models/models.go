@@ -40,7 +40,7 @@ func (vl ValidationStruct) NewValidation(logger zerolog.Logger, structure interf
 	if err := vl.Struct(structure); err != nil{
 		logger.Err(err).Msg("Validation error occured!\n")
 		for _, e := range err.(validator.ValidationErrors){
-			logger.Err(err).Msg("Field: %s; Tag: %s"+ e.Field()+ e.Tag())
+			logger.Error().Err(err).Msg("Field: %s; Tag: %s"+ e.Field()+ e.Tag())
 		}
 	}
 }

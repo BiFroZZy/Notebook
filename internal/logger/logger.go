@@ -24,7 +24,7 @@ func NewLogger() zerolog.Logger{
 	return log.Logger
 }
 
-func LoggerMiddleawre() echo.MiddlewareFunc{
+func LoggerMiddleware() echo.MiddlewareFunc{
 	logger := lecho.New(os.Stdout, lecho.WithTimestamp())
 	return lecho.Middleware(lecho.Config{
 		Logger:              logger,
