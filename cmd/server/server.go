@@ -65,6 +65,7 @@ func (s *Server) Routes() {
 func New(cfg *config.Config) *Server{
 	e := echo.New()
 	e.HideBanner = true
+	e.HidePort = true
 	return &Server{
 		echo: e,
 		cfg: cfg,
