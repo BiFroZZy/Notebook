@@ -54,7 +54,6 @@ func (s *Server) Routes() {
 	users := s.echo.Group("/users/:user_id")
 	users.Use(auth.AuthMiddleware)
 	{
-		users.GET("/about", h.AboutPage)
 		users.GET("/notes", db.ShowNotes)
 		users.POST("/notes/delete", db.DeleteNotes)
 		users.POST("/notes/post", db.WriteNotes)

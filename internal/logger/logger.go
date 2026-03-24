@@ -28,7 +28,7 @@ func LoggerMiddleware() echo.MiddlewareFunc{
 	logger := lecho.New(os.Stdout, lecho.WithTimestamp())
 	return lecho.Middleware(lecho.Config{
 		Logger:              logger,
-		RequestLatencyLevel: zerolog.WarnLevel,        
+		RequestLatencyLevel: zerolog.DebugLevel,        
 		RequestLatencyLimit: 500 * time.Millisecond,  
 	})
 }

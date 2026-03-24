@@ -1,13 +1,14 @@
 package jwt
 
-import(
-	"time"
+import (
 	"os"
+	_"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
-	l"notebook/internal/logger"
+	"notebook/internal/config"
+	l "notebook/internal/logger"
 	mod "notebook/internal/models"
 )
 
@@ -17,18 +18,13 @@ var (
 )
 
 func GenerateJWT(userID uuid.UUID) (string, error) {
-	tokenData := mod.JWT{
-		UserID: userID.String(),
-		Exp: time.Now().Add(time.Second*600).Unix(),
-		Iat: time.Now().Unix(),
-		Iss: "Vladimir Putin",
-	}
-	mod.CallValidation(logger, tokenData)
+	cfg := config.Config{}
+	mod.CallValidation(logger, cfg)
 	claims := jwt.MapClaims{
-		"sub": tokenData.UserID,
-		"exp": tokenData.Exp,
-		"iat": tokenData.Iat,
-		"iss": tokenData.Iss,
+		"sub": userID.String(),
+		"exp": cfg.Exp,
+		"iat": cfg.Iat,
+		"iss": cfg.Iss,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(secretKey)

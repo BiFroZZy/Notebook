@@ -65,20 +65,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/:id/about": {
-            "get": {
-                "description": "Основная информация о проекте",
-                "produces": [
-                    "text/html"
-                ],
-                "summary": "About",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
         "/users/:id/info": {
             "get": {
                 "description": "Основная информация о проекте",
@@ -119,12 +105,12 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
+	Version:          "1.0",
+	Host:             "localhost",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Notebook documentaion (Документация по программе)",
+	Description:      "Записки для пользователей",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

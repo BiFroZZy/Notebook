@@ -1,8 +1,12 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "Записки для пользователей",
+        "title": "Notebook documentaion (Документация по программе)",
+        "contact": {},
+        "version": "1.0"
     },
+    "host": "localhost",
     "paths": {
         "/public/auth": {
             "get": {
@@ -47,20 +51,6 @@
             "post": {
                 "description": "Отправка данных пользователя в базу данных на странице регистрации",
                 "summary": "Registration posting data",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/users/:id/about": {
-            "get": {
-                "description": "Основная информация о проекте",
-                "produces": [
-                    "text/html"
-                ],
-                "summary": "About",
                 "responses": {
                     "200": {
                         "description": "OK"

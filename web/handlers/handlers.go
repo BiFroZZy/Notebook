@@ -36,18 +36,7 @@ func RegPage(c echo.Context) error{
 		"Title": "Registration",
 	})
 }
-// @Summary About
-// @Description Основная информация о проекте
-// @Router /users/:id/about [get]
-// @Produce html
-// @Success 200
-func AboutPage(c echo.Context) error{
-	userID := c.Param("user_id")
-	return c.Render(http.StatusOK, "about.html", map[string]interface{}{
-		"Title": "About",
-		"UserID": userID,
-	})
-}
+
 // @Summary Info
 // @Description Основная информация о проекте
 // @Router /users/:id/info [get]
