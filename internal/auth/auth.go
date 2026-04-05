@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 
-	db "notebook/internal/database"
+	db "notebook/internal/repository"
 	l "notebook/internal/logger"
 	j "notebook/internal/jwt"
 	mod "notebook/internal/models"

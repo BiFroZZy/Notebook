@@ -8,7 +8,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	db "notebook/internal/database"
+	db "notebook/internal/repository"
 	l "notebook/internal/logger"
 	mod "notebook/internal/models"
 )

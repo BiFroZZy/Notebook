@@ -18,7 +18,7 @@ import (
 	_ "notebook/docs"
 	"notebook/internal/auth"
 	"notebook/internal/config"
-	db "notebook/internal/database"
+	db "notebook/internal/repository"
 	l "notebook/internal/logger"
 	h "notebook/web/handlers"
 )

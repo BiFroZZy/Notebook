@@ -11,5 +11,5 @@ WORKDIR /root/
 COPY --from=builder /app/app .
 COPY .env .
 COPY --from=builder /app/web/templates ./web/templates
-EXPOSE 8080
+EXPOSE 7080
 CMD ["./app"]

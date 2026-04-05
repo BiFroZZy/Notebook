@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	mod "notebook/internal/models"
-	db "notebook/internal/database"
+	db "notebook/internal/repository"
 )
 func HashingFunc(password string) (hashedPass []byte){
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
